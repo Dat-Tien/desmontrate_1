@@ -1,3 +1,5 @@
+#include <atomic>
+#include <csignal>
 #include <chrono>
 #include <iostream>
 #include <thread>
@@ -14,9 +16,22 @@ namespace {
 
 using namespace app;
 
+std::atomic<bool> g_running{true};
+MessageQueue<AppMessage>* g_queue = nullptr;
+
+void SignalHandler(int signal) {
+    LOGD("[Main] Signal received: %d", signal);
+    g_running = false;
+    if (g_queue != nullptr) {
+        g_queue->Stop();
+    }
+}
+
 void PushToQueue(MessageQueue<AppMessage>& queue, const AppMessage& message) {
-    LOGD("[Main] Queueing message from service= %s, event= %s, payload= %s",
-                ToString(message.service).c_str(), ToString(message.event).c_str(),  message.payload.c_str());
+    LOGD("[Main] Queueing message from service=%s, event=%s, payload=%s",
+         ToString(message.service).c_str(),
+         ToString(message.event).c_str(),
+         message.payload.c_str());
     queue.Push(message);
 }
 
@@ -25,12 +40,17 @@ void PushToQueue(MessageQueue<AppMessage>& queue, const AppMessage& message) {
 int main() {
     using namespace app;
 
+    std::signal(SIGINT, SignalHandler);
+    std::signal(SIGTERM, SignalHandler);
+
     constexpr const char* kAudioSocketPath = "/tmp/_audio_service.sock";
     constexpr const char* kHmiSocketPath = "/tmp/_hmi_service.sock";
     constexpr const char* kPowerSocketPath = "/tmp/_power_service.sock";
     constexpr const char* kRegionSocketPath = "/tmp/_region_service.sock";
 
     MessageQueue<AppMessage> queue;
+    g_queue = &queue;
+
     ProcessorManager& processor_manager = ProcessorManager::GetInstance();
 
     HmiWrapper& hmi_wrapper = HmiWrapper::GetInstance();
@@ -56,13 +76,13 @@ int main() {
 
     std::thread app_thread([&]() {
         bool running = true;
-        while (running) {
-            AppMessage message = queue.WaitAndPop();
+        AppMessage message{};
 
+        while (running && queue.WaitAndPop(message)) {
             if (message.event == EventType::Shutdown) {
                 LOGD("[AppThread] Shutdown received");
                 running = false;
-                continue;
+                break;
             }
 
             if (message.event == EventType::RegionChanged) {
@@ -73,6 +93,8 @@ int main() {
 
             processor_manager.HandleMessage(message);
         }
+
+        LOGD("[AppThread] Exiting");
     });
 
     LOGD("===  Architecture Demo Start ===");
@@ -86,7 +108,7 @@ int main() {
     if (hmi_wrapper.Connect(kHmiSocketPath)) {
         hmi_wrapper.StartListening();
     } else {
-        LOGD("[Main] HmiService is not connected. Start AudioService first for IPC demo.");
+        LOGD("[Main] HmiService is not connected. Start HmiService first for IPC demo.");
     }
 
     app_thread.join();

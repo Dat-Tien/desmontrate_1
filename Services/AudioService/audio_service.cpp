@@ -8,6 +8,7 @@
 #include <iostream>
 #include <string>
 #include <thread>
+#include <poll.h>
 
 namespace {
 
@@ -98,42 +99,61 @@ int main() {
     std::cout << "[AudioService] Waiting for SLDD commands on " << kAudioCmdSocket << std::endl;
 
     while (g_running) {
-        const int cmd_client_fd = accept(cmd_server_fd, nullptr, nullptr);
-        if (cmd_client_fd < 0) {
+        pollfd pfd{};
+        pfd.fd = cmd_server_fd;
+        pfd.events = POLLIN;
+
+        int ret = poll(&pfd, 1, 500); // 500 ms timeout
+        if (ret < 0) {
             if (!g_running) {
                 break;
             }
-            std::cerr << "[AudioService] Failed to accept SLDD client" << std::endl;
+            std::cerr << "[AudioService] poll failed" << std::endl;
             continue;
         }
 
-        std::string buffer;
-        char read_buffer[128] {};
-
-        while (true) {
-            const ssize_t bytes_read = read(cmd_client_fd, read_buffer, sizeof(read_buffer) - 1);
-            if (bytes_read <= 0) {
-                break;
-            }
-
-            read_buffer[bytes_read] = '\0';
-            buffer.append(read_buffer, static_cast<std::size_t>(bytes_read));
-
-            std::size_t newline_pos = std::string::npos;
-            while ((newline_pos = buffer.find('\n')) != std::string::npos) {
-                const std::string line = buffer.substr(0, newline_pos);
-                buffer.erase(0, newline_pos + 1);
-
-                if (line.empty()) {
-                    continue;
-                }
-
-                std::cout << "[AudioService] Received from SLDD: " << line << std::endl;
-                ForwardLine(app_client_fd, line);
-            }
+        if (ret == 0) {
+            continue; // timeout, re-check g_running
         }
 
-        close(cmd_client_fd);
+        if (pfd.revents & POLLIN) {
+            const int cmd_client_fd = accept(cmd_server_fd, nullptr, nullptr);
+            if (cmd_client_fd < 0) {
+                if (!g_running) {
+                    break;
+                }
+                std::cerr << "[AudioService] Failed to accept SLDD client" << std::endl;
+                continue;
+            }
+
+            std::string buffer;
+            char read_buffer[128]{};
+
+            while (g_running) {
+                const ssize_t bytes_read = read(cmd_client_fd, read_buffer, sizeof(read_buffer) - 1);
+                if (bytes_read <= 0) {
+                    break;
+                }
+
+                read_buffer[bytes_read] = '\0';
+                buffer.append(read_buffer, static_cast<std::size_t>(bytes_read));
+
+                std::size_t newline_pos = std::string::npos;
+                while ((newline_pos = buffer.find('\n')) != std::string::npos) {
+                    const std::string line = buffer.substr(0, newline_pos);
+                    buffer.erase(0, newline_pos + 1);
+
+                    if (line.empty()) {
+                        continue;
+                    }
+
+                    std::cout << "[AudioService] Received from SLDD: " << line << std::endl;
+                    ForwardLine(app_client_fd, line);
+                }
+            }
+
+            close(cmd_client_fd);
+        }
     }
 
     close(app_client_fd);

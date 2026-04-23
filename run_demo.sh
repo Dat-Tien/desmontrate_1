@@ -6,9 +6,19 @@ BUILD_DIR="$ROOT_DIR/build"
 LOG_FILE="$ROOT_DIR/log.txt"
 
 cleanup() {
+    [[ "$CLEANED_UP" -eq 1 ]] && return
+    CLEANED_UP=1
+
     echo "[run_demo] cleaning up..."
+
     [[ -n "${APP_PID:-}" ]] && kill -TERM "$APP_PID" 2>/dev/null || true
     [[ -n "${AUDIO_PID:-}" ]] && kill -TERM "$AUDIO_PID" 2>/dev/null || true
+
+    sleep 1
+
+    [[ -n "${APP_PID:-}" ]] && kill -0 "$APP_PID" 2>/dev/null && kill -KILL "$APP_PID" 2>/dev/null || true
+    [[ -n "${AUDIO_PID:-}" ]] && kill -0 "$AUDIO_PID" 2>/dev/null && kill -KILL "$AUDIO_PID" 2>/dev/null || true
+
     wait "${APP_PID:-}" 2>/dev/null || true
     wait "${AUDIO_PID:-}" 2>/dev/null || true
 }
