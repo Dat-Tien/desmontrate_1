@@ -3,9 +3,9 @@
 #include <memory>
 #include <map>
 
-#include "eu_processor.hpp"
-#include "us_processor.hpp"
-#include "jp_processor.hpp"
+#include "dest_one_processor.hpp"
+#include "dest_two_processor.hpp"
+#include "dest_three_processor.hpp"
 #include "types.hpp"
 
 namespace app {
@@ -26,8 +26,8 @@ public:
 
 private:
     ProcessorManager();
-    Region m_current_region {Region::JP};
-    std::map<Region, std::shared_ptr<app::ProcessorBase>> m_processor_map;
+    Region m_current_region {Region::RegionThree};
+    std::map<Region, std::shared_ptr<app::IProcessor>> m_processor_map;
 };
 
 } // namespace app

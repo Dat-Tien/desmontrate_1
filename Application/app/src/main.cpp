@@ -54,7 +54,7 @@ int main() {
     ProcessorManager& processor_manager = ProcessorManager::GetInstance();
 
     HmiWrapper& hmi_wrapper = HmiWrapper::GetInstance();
-    AudioWrapper& audio_wrapper = AudioWrapper::GetInstance();
+    ServiceOneWrapper& audio_wrapper = ServiceOneWrapper::GetInstance();
     RegionWrapper& region_wrapper = RegionWrapper::GetInstance();
     PowerWrapper& power_wrapper = PowerWrapper::GetInstance();
 
@@ -86,7 +86,7 @@ int main() {
             }
 
             if (message.event == EventType::RegionChanged) {
-                const auto region = (message.payload == "EU") ? Region::EU : Region::JP;
+                const auto region = (message.payload == "RegionOne") ? Region::RegionOne : Region::RegionThree;
                 processor_manager.SetRegion(region);
                 continue;
             }

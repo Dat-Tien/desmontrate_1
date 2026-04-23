@@ -11,9 +11,9 @@ add_executable(_arch_demo
     app/src/main.cpp
     app/src/state_machine.cpp
     app/src/processor_manager.cpp
-    app/src/eu_processor.cpp
-    app/src/jp_processor.cpp
-    app/src/us_processor.cpp
+    app/src/dest_one_processor.cpp
+    app/src/dest_two_processor.cpp
+    app/src/dest_three_processor.cpp
     app/src/western_processor.cpp
     utils/src/types.cpp
     services/src/hmi_wrapper.cpp

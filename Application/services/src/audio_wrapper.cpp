@@ -22,27 +22,27 @@ EventType ParseAudioEvent(const std::string& raw_event) {
 
 } // namespace
 
-AudioWrapper& AudioWrapper::GetInstance()
+ServiceOneWrapper& ServiceOneWrapper::GetInstance()
 {
-    static AudioWrapper instance;
+    static ServiceOneWrapper instance;
     return instance;
 }
 
-AudioWrapper::AudioWrapper() = default;
+ServiceOneWrapper::ServiceOneWrapper() = default;
 
-AudioWrapper::~AudioWrapper() {
+ServiceOneWrapper::~ServiceOneWrapper() {
     Stop();
 }
 
-void AudioWrapper::RegisterCallback(Callback callback) {
+void ServiceOneWrapper::RegisterCallback(Callback callback) {
     m_callback = std::move(callback);
 }
 
-bool AudioWrapper::Connect(const std::string& socket_path) {
+bool ServiceOneWrapper::Connect(const std::string& socket_path) {
     m_socket_path = socket_path;
     m_socket_fd = socket(AF_UNIX, SOCK_STREAM, 0);
     if (m_socket_fd < 0) {
-        std::cerr << "[AudioWrapper] Failed to create socket: " << std::strerror(errno) << std::endl;
+        std::cerr << "[ServiceOneWrapper] Failed to create socket: " << std::strerror(errno) << std::endl;
         return false;
     }
 
@@ -51,26 +51,26 @@ bool AudioWrapper::Connect(const std::string& socket_path) {
     std::strncpy(addr.sun_path, socket_path.c_str(), sizeof(addr.sun_path) - 1);
 
     if (connect(m_socket_fd, reinterpret_cast<sockaddr*>(&addr), sizeof(addr)) < 0) {
-        std::cerr << "[AudioWrapper] Failed to connect to AudioService: " << std::strerror(errno) << std::endl;
+        std::cerr << "[ServiceOneWrapper] Failed to connect to AudioService: " << std::strerror(errno) << std::endl;
         close(m_socket_fd);
         m_socket_fd = -1;
         return false;
     }
 
-    LOGD("[AudioWrapper] Connected to AudioService via IPC: %s", socket_path.c_str());
+    LOGD("[ServiceOneWrapper] Connected to AudioService via IPC: %s", socket_path.c_str());
     return true;
 }
 
-void AudioWrapper::StartListening() {
+void ServiceOneWrapper::StartListening() {
     if (m_socket_fd < 0 || m_running) {
         return;
     }
 
     m_running = true;
-    m_listener_thread = std::thread(&AudioWrapper::ListenLoop, this);
+    m_listener_thread = std::thread(&ServiceOneWrapper::ListenLoop, this);
 }
 
-void AudioWrapper::Stop() {
+void ServiceOneWrapper::Stop() {
     if (m_running.exchange(false) && m_socket_fd >= 0) {
         shutdown(m_socket_fd, SHUT_RDWR);
     }
@@ -85,14 +85,14 @@ void AudioWrapper::Stop() {
     }
 }
 
-void AudioWrapper::ListenLoop() {
+void ServiceOneWrapper::ListenLoop() {
     std::string buffer;
     char read_buffer[128] {};
 
     while (m_running) {
         const ssize_t bytes_read = read(m_socket_fd, read_buffer, sizeof(read_buffer) - 1);
         if (bytes_read <= 0) {
-            LOGD("[AudioWrapper] AudioService connection closed");
+            LOGD("[ServiceOneWrapper] AudioService connection closed");
             break;
         }
 
@@ -108,7 +108,7 @@ void AudioWrapper::ListenLoop() {
                 continue;
             }
 
-            LOGD("[AudioWrapper] IPC message received: %s", line.c_str());
+            LOGD("[ServiceOneWrapper] IPC message received: %s", line.c_str());
             const EventType event = ParseAudioEvent(line);
             if (event != EventType::Shutdown && m_callback) {
                 m_callback(AppMessage{ServiceType::Audio, event, line});

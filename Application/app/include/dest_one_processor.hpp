@@ -4,9 +4,9 @@
 
 namespace app {
 
-class EUProcessor final : public WesternProcessor {
+class DestOneProcessor final : public WesternProcessor {
 public:
-    EUProcessor();
+    DestOneProcessor();
     void HandleMessage(const AppMessage& message) override;
     Region GetRegion() const override;
 

@@ -5,9 +5,9 @@
 namespace app {
 
 enum class Region {
-    JP,
-    EU,
-    US,
+    RegionThree,
+    RegionOne,
+    RegionTwo,
     Unknown
 };
 

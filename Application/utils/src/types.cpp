@@ -4,8 +4,8 @@ namespace app {
 
 std::string ToString(Region region) {
     switch (region) {
-        case Region::JP: return "JP";
-        case Region::EU: return "EU";
+        case Region::RegionThree: return "RegionThree";
+        case Region::RegionOne: return "RegionOne";
         default: return "Unknown";
     }
 }

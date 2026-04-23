@@ -1,10 +1,10 @@
 #pragma once
 
-#include "processor_base.hpp"
+#include "iprocessor.hpp"
 
 namespace app {
 
-class WesternProcessor : public ProcessorBase {
+class WesternProcessor : public IProcessor {
 public:
     WesternProcessor();
     void HandleMessage(const AppMessage& message) override;

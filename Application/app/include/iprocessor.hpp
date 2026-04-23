@@ -6,9 +6,9 @@
 
 namespace app {
 
-class ProcessorBase {
+class IProcessor {
 public:
-    virtual ~ProcessorBase() = default;
+    virtual ~IProcessor() = default;
     virtual void HandleMessage(const AppMessage& message) = 0;
     virtual Region GetRegion() const = 0;
 

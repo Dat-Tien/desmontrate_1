@@ -1,4 +1,4 @@
-#include "eu_processor.hpp"
+#include "western_processor.hpp"
 
 #include <iostream>
 
@@ -21,7 +21,7 @@ void WesternProcessor::HandleMessage(const AppMessage& message) {
 }
 
 void WesternProcessor::OnIgnitionOn() {
-    LOGD("[WesternProcessor] Initialize EU-specific ignition flow");
+    LOGD("[WesternProcessor] Initialize RegionOne-specific ignition flow");
 }
 
 } // namespace app

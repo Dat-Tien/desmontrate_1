@@ -6,9 +6,9 @@ namespace app {
 
 ProcessorManager::ProcessorManager() 
 {
-    m_processor_map.insert(std::make_pair(Region::JP, std::make_shared<app::JPProcessor>()));
-    m_processor_map.insert(std::make_pair(Region::EU, std::make_shared<app::EUProcessor>()));
-    m_processor_map.insert(std::make_pair(Region::US, std::make_shared<app::USProcessor>()));
+    m_processor_map.insert(std::make_pair(Region::RegionThree, std::make_shared<app::DestThreeProcessor>()));
+    m_processor_map.insert(std::make_pair(Region::RegionOne, std::make_shared<app::DestOneProcessor>()));
+    m_processor_map.insert(std::make_pair(Region::RegionTwo, std::make_shared<app::DestTwoProcessor>()));
 }
 
 ProcessorManager& ProcessorManager::GetInstance()

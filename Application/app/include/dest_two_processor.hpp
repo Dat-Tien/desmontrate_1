@@ -1,18 +1,16 @@
 #pragma once
 
-#include "processor_base.hpp"
+#include "western_processor.hpp"
 
 namespace app {
 
-class JPProcessor final : public ProcessorBase {
+class DestTwoProcessor final : public WesternProcessor {
 public:
-    JPProcessor();
+    DestTwoProcessor();
     void HandleMessage(const AppMessage& message) override;
     Region GetRegion() const override;
 
 protected:
-    virtual void InitializeStateMachine() override;
-    virtual void OnIgnitionOn() override;
     virtual void OnStartRequest() override;
     virtual void OnRecovery() override;
     virtual void OnStopRequest() override;

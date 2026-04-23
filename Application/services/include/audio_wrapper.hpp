@@ -9,17 +9,17 @@
 
 namespace app {
 
-class AudioWrapper {
+class ServiceOneWrapper {
 public:
     using Callback = std::function<void(const AppMessage&)>;
 
-    ~AudioWrapper();
-    AudioWrapper(const AudioWrapper&) = delete;
-    AudioWrapper& operator=(const AudioWrapper&) = delete;
-    AudioWrapper(AudioWrapper&&) = delete;
-    AudioWrapper& operator=(AudioWrapper&&) = delete;
+    ~ServiceOneWrapper();
+    ServiceOneWrapper(const ServiceOneWrapper&) = delete;
+    ServiceOneWrapper& operator=(const ServiceOneWrapper&) = delete;
+    ServiceOneWrapper(ServiceOneWrapper&&) = delete;
+    ServiceOneWrapper& operator=(ServiceOneWrapper&&) = delete;
 
-    static AudioWrapper& GetInstance();
+    static ServiceOneWrapper& GetInstance();
     
     void RegisterCallback(Callback callback);
     bool Connect(const std::string& socket_path);
@@ -27,7 +27,7 @@ public:
     void Stop();
 
 private:
-    AudioWrapper();
+    ServiceOneWrapper();
 
     void ListenLoop();
 
