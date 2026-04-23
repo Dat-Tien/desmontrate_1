@@ -1,0 +1,10 @@
+cmake_minimum_required(VERSION 3.14)
+project(ArchitectureDemoWorkspace LANGUAGES CXX)
+
+add_subdirectory(Application)
+add_subdirectory(Common)
+add_subdirectory(sldd)
+add_subdirectory(Services/AudioService)
+add_subdirectory(Services/HmiService)
+add_subdirectory(Services/PowerService)
+add_subdirectory(Services/RegionService)
