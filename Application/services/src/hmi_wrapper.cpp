@@ -13,9 +13,9 @@ namespace app {
 
 namespace {
 
-EventType ParseAudioEvent(const std::string& raw_event) {
-    if (raw_event == "AUDIO_BEEP") {
-        return EventType::AudioBeep;
+EventType ParseHmiEvent(const std::string& raw_event) {
+    if (raw_event == "Hmi_BEEP") {
+        return EventType::HmiBeep;
     }
     return EventType::Unknown;
 }
@@ -51,13 +51,13 @@ bool HmiWrapper::Connect(const std::string& socket_path) {
     std::strncpy(addr.sun_path, socket_path.c_str(), sizeof(addr.sun_path) - 1);
 
     if (connect(m_socket_fd, reinterpret_cast<sockaddr*>(&addr), sizeof(addr)) < 0) {
-        std::cerr << "[HmiWrapper] Failed to connect to AudioService: " << std::strerror(errno) << std::endl;
+        std::cerr << "[HmiWrapper] Failed to connect to HmiService: " << std::strerror(errno) << std::endl;
         close(m_socket_fd);
         m_socket_fd = -1;
         return false;
     }
 
-    LOGD("[HmiWrapper] Connected to AudioService via IPC: %s", socket_path.c_str());
+    LOGD("[HmiWrapper] Connected to HmiService via IPC: %s", socket_path.c_str());
     return true;
 }
 
@@ -92,7 +92,7 @@ void HmiWrapper::ListenLoop() {
     while (m_running) {
         const ssize_t bytes_read = read(m_socket_fd, read_buffer, sizeof(read_buffer) - 1);
         if (bytes_read <= 0) {
-            LOGD("[HmiWrapper] AudioService connection closed");
+            LOGD("[HmiWrapper] HmiService connection closed");
             break;
         }
 
@@ -109,9 +109,9 @@ void HmiWrapper::ListenLoop() {
             }
 
             LOGD("[HmiWrapper] IPC message received: %s", line.c_str());
-            const EventType event = ParseAudioEvent(line);
+            const EventType event = ParseHmiEvent(line);
             if (event != EventType::Shutdown && m_callback) {
-                m_callback(AppMessage{ServiceType::Audio, event, line});
+                m_callback(AppMessage{ServiceType::HMI, event, line});
             }
         }
     }

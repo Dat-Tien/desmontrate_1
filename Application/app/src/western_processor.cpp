@@ -9,10 +9,12 @@ WesternProcessor::WesternProcessor() {
 }
 
 void WesternProcessor::InitializeStateMachine() {
-    m_state_machine.AddTransition(ProcessorState::Idle,       EventType::IgnitionOn,    ProcessorState::IgnitionOn, [this]() { OnIgnitionOn(); });
-    m_state_machine.AddTransition(ProcessorState::IgnitionOn, EventType::StartRequest,  ProcessorState::Running,    [this]() { OnStartRequest(); });
-    m_state_machine.AddTransition(ProcessorState::IgnitionOn, EventType::StartRecovery, ProcessorState::Recovery,   [this]() { OnRecovery(); });
-    m_state_machine.AddTransition(ProcessorState::Running,    EventType::StopRequest,   ProcessorState::Stopped,    [this]() { OnStopRequest(); });
+    m_state_machine.AddTransition(ProcessorState::Idle,       EventType::PowerIgnitionOn,          ProcessorState::IgnitionOn, [this]() { OnIgnitionOn(); });
+    m_state_machine.AddTransition(ProcessorState::IgnitionOn, EventType::ApplicationStartRequest,  ProcessorState::Running,    [this]() { OnStartRequest(); });
+    m_state_machine.AddTransition(ProcessorState::IgnitionOn, EventType::ApplicationRecovery,      ProcessorState::Recovery,   [this]() { OnRecovery(); });
+    m_state_machine.AddTransition(ProcessorState::Running,    EventType::ApplicationStopRequest,   ProcessorState::Stopped,    [this]() { OnStopRequest(); });
+    m_state_machine.AddTransition(ProcessorState::Recovery,   EventType::ApplicationStopRequest,   ProcessorState::Stopped,    [this]() { OnStopRequest(); });
+    m_state_machine.AddTransition(ProcessorState::Stopped,    EventType::PowerIgnitionOff,         ProcessorState::Idle,       [this]() { OnIgnitionOff(); });
 }
 
 void WesternProcessor::HandleMessage(const AppMessage& message) {
@@ -21,6 +23,10 @@ void WesternProcessor::HandleMessage(const AppMessage& message) {
 }
 
 void WesternProcessor::OnIgnitionOn() {
+    LOGD("[WesternProcessor] Initialize RegionOne-specific ignition flow");
+}
+
+void WesternProcessor::OnIgnitionOff() {
     LOGD("[WesternProcessor] Initialize RegionOne-specific ignition flow");
 }
 

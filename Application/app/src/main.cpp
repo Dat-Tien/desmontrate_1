@@ -111,6 +111,18 @@ int main() {
         LOGD("[Main] HmiService is not connected. Start HmiService first for IPC demo.");
     }
 
+    if (region_wrapper.Connect(kRegionSocketPath)) {
+        region_wrapper.StartListening();
+    } else {
+        LOGD("[Main] RegionService is not connected. Start RegionService first for IPC demo.");
+    }
+
+    if (power_wrapper.Connect(kPowerSocketPath)) {
+        power_wrapper.StartListening();
+    } else {
+        LOGD("[Main] PowerService is not connected. Start PowerService first for IPC demo.");
+    }
+
     app_thread.join();
 
     LOGD("===  Architecture Demo End ===");

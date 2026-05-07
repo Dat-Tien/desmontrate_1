@@ -15,6 +15,7 @@ public:
 protected:
     virtual void InitializeStateMachine() = 0;
     virtual void OnIgnitionOn() = 0;
+    virtual void OnIgnitionOff() = 0;
     virtual void OnStartRequest() = 0;
     virtual void OnRecovery() = 0;
     virtual void OnStopRequest() = 0;

@@ -15,16 +15,36 @@ enum class ServiceType {
     HMI,
     Audio,
     Region,
+    Power,
     System
 };
 
 enum class EventType {
-    IgnitionOn,
-    StartRequest,
-    StartRecovery,
-    StopRequest,
+    // Audio Events
+    AudioStart,
+    AudioStop,
     AudioBeep,
+    // Power Events
+    PowerStart,
+    PowerStop,
+    PowerShutdown,
+    PowerIgnitionOn,
+    PowerIgnitionOff,
+    PowerSleep,
+    PowerWake,
+    // HMI Events
+    HmiBeep,
+    // Region Events
     RegionChanged,
+    // Application Events
+    ApplicationStartRequest,
+    ApplicationRecovery,
+    ApplicationStopRequest,
+    ApplicationRecoveryRequest,
+    ApplicationResetRequest,
+    ApplicationUpdateRequest,
+    ApplicationStatusRequest,
+    // Common Events
     Unknown,
     Shutdown
 };

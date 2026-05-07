@@ -13,6 +13,7 @@ public:
 protected:
     virtual void InitializeStateMachine() override;
     virtual void OnIgnitionOn() override;
+    virtual void OnIgnitionOff() override;
     virtual void OnStartRequest() override;
     virtual void OnRecovery() override;
     virtual void OnStopRequest() override;

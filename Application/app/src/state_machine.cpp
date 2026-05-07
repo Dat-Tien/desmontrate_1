@@ -9,6 +9,10 @@ void StateMachine::AddTransition(ProcessorState current, EventType event, Proces
 
 void StateMachine::HandleEvent(EventType event)
 {
+    if (event == EventType::PowerIgnitionOff) {
+        LOGE("[StateMachine] Ignoring unknown event");
+        return;
+    }
     for (const auto& transition : m_transitions) {
         if (transition.current_state == m_current_state && transition.event == event) {
             LOGD("[StateMachine] Transition %s -> %s", ToString(m_current_state).c_str(), ToString(transition.next_state).c_str());

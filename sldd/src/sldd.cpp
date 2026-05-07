@@ -37,18 +37,16 @@ bool SlddClient::Run(int argc, char* argv[]) {
     for (int i = 2; i < argc; ++i) {
         messages.emplace_back(argv[i]);
     }
-    
-    for (auto it = socket_map.begin(); it != socket_map.end(); ++it)
-    {
-        if (it->first == domain)
-        {
-            return HandleCommand(domain, messages);
-        }
+
+    if (socket_map.find(domain) != socket_map.end()) {
+        return HandleCommand(domain, messages);
     }
-    
-    LOGE("[SLDD] Unsupported domain: %s", domain.c_str());
-    PrintUsage();
-    return false;
+    else
+    {
+        LOGE("[SLDD] Unsupported domain: %s", domain.c_str());
+        PrintUsage();
+        return false;
+    }
 }
 
 bool SlddClient::HandleCommand(const std::string& domain, const std::vector<std::string>& messages) {
@@ -58,16 +56,21 @@ bool SlddClient::HandleCommand(const std::string& domain, const std::vector<std:
         return false;
     }
 
+    bool ret_val = true;
     if (socket_map.find(domain) != socket_map.end())
     {
         for (const auto& msg : messages) {
             if (!SendMessage(socket_map.at(domain).c_str(), msg)) {
-                return false;
+                ret_val = false;
+                break;
             }
         }
     }
+    else {
+        ret_val = false;
+    }
 
-    return true;
+    return ret_val;
 }
 
 bool SlddClient::SendMessage(const std::string& socket_path, const std::string& message) {

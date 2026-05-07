@@ -12,6 +12,7 @@ public:
 protected:
     virtual void InitializeStateMachine() override;
     virtual void OnIgnitionOn() override;
+    virtual void OnIgnitionOff() override;
 };
 
 } // namespace app

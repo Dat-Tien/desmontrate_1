@@ -13,9 +13,9 @@ namespace app {
 
 namespace {
 
-EventType ParseAudioEvent(const std::string& raw_event) {
-    if (raw_event == "AUDIO_BEEP") {
-        return EventType::AudioBeep;
+EventType ParseRegionEvent(const std::string& raw_event) {
+    if (raw_event == "REGION_CHANGED") {
+        return EventType::RegionChanged;
     }
     return EventType::Unknown;
 }
@@ -51,13 +51,13 @@ bool RegionWrapper::Connect(const std::string& socket_path) {
     std::strncpy(addr.sun_path, socket_path.c_str(), sizeof(addr.sun_path) - 1);
 
     if (connect(m_socket_fd, reinterpret_cast<sockaddr*>(&addr), sizeof(addr)) < 0) {
-        std::cerr << "[RegionWrapper] Failed to connect to AudioService: " << std::strerror(errno) << std::endl;
+        std::cerr << "[RegionWrapper] Failed to connect to RegionService: " << std::strerror(errno) << std::endl;
         close(m_socket_fd);
         m_socket_fd = -1;
         return false;
     }
 
-    LOGD("[RegionWrapper] Connected to AudioService via IPC: %s", socket_path.c_str());
+    LOGD("[RegionWrapper] Connected to RegionService via IPC: %s", socket_path.c_str());
     return true;
 }
 
@@ -92,7 +92,7 @@ void RegionWrapper::ListenLoop() {
     while (m_running) {
         const ssize_t bytes_read = read(m_socket_fd, read_buffer, sizeof(read_buffer) - 1);
         if (bytes_read <= 0) {
-            LOGD("[RegionWrapper] AudioService connection closed");
+            LOGD("[RegionWrapper] RegionService connection closed");
             break;
         }
 
@@ -109,9 +109,9 @@ void RegionWrapper::ListenLoop() {
             }
 
             LOGD("[RegionWrapper] IPC message received: %s", line.c_str());
-            const EventType event = ParseAudioEvent(line);
+            const EventType event = ParseRegionEvent(line);
             if (event != EventType::Shutdown && m_callback) {
-                m_callback(AppMessage{ServiceType::Audio, event, line});
+                m_callback(AppMessage{ServiceType::Region, event, line});
             }
         }
     }

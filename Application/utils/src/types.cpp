@@ -22,12 +22,31 @@ std::string ToString(ServiceType service) {
 
 std::string ToString(EventType event) {
     switch (event) {
-        case EventType::IgnitionOn: return "IgnitionOn";
-        case EventType::StartRequest: return "StartRequest";
-        case EventType::StartRecovery: return "StartRecovery";
-        case EventType::StopRequest: return "StopRequest";
+        // Audio Events
+        case EventType::AudioStart: return "AudioStart";
+        case EventType::AudioStop: return "AudioStop";
         case EventType::AudioBeep: return "AudioBeep";
+        // Power Events
+        case EventType::PowerStart: return "PowerStart";
+        case EventType::PowerStop: return "PowerStop";
+        case EventType::PowerShutdown: return "PowerShutdown";
+        case EventType::PowerIgnitionOn: return "PowerIgnitionOn";
+        case EventType::PowerIgnitionOff: return "PowerIgnitionOff";
+        case EventType::PowerSleep: return "PowerSleep";
+        case EventType::PowerWake: return "PowerWake";
+        // HMI Events
+        case EventType::HmiBeep: return "HmiBeep";
+        // Region Events
         case EventType::RegionChanged: return "RegionChanged";
+        // Application Events
+        case EventType::ApplicationStartRequest: return "ApplicationStartRequest";
+        case EventType::ApplicationRecovery: return "ApplicationRecovery";
+        case EventType::ApplicationStopRequest: return "ApplicationStopRequest";
+        case EventType::ApplicationRecoveryRequest: return "ApplicationRecoveryRequest";
+        case EventType::ApplicationResetRequest: return "ApplicationResetRequest";
+        case EventType::ApplicationUpdateRequest: return "ApplicationUpdateRequest";
+        case EventType::ApplicationStatusRequest: return "ApplicationStatusRequest";
+        // Common Events
         case EventType::Shutdown: return "Shutdown";
         default: return "Unknown";
     }

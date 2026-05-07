@@ -13,8 +13,8 @@ namespace app {
 
 namespace {
 
-EventType ParseAudioEvent(const std::string& raw_event) {
-    if (raw_event == "AUDIO_BEEP") {
+EventType ParsePowerEvent(const std::string& raw_event) {
+    if (raw_event == "Power_BEEP") {
         return EventType::AudioBeep;
     }
     return EventType::Unknown;
@@ -51,13 +51,13 @@ bool PowerWrapper::Connect(const std::string& socket_path) {
     std::strncpy(addr.sun_path, socket_path.c_str(), sizeof(addr.sun_path) - 1);
 
     if (connect(m_socket_fd, reinterpret_cast<sockaddr*>(&addr), sizeof(addr)) < 0) {
-        std::cerr << "[PowerWrapper] Failed to connect to AudioService: " << std::strerror(errno) << std::endl;
+        std::cerr << "[PowerWrapper] Failed to connect to PowerService: " << std::strerror(errno) << std::endl;
         close(m_socket_fd);
         m_socket_fd = -1;
         return false;
     }
 
-    LOGD("[PowerWrapper] Connected to AudioService via IPC: %s", socket_path.c_str());
+    LOGD("[PowerWrapper] Connected to PowerService via IPC: %s", socket_path.c_str());
     return true;
 }
 
@@ -92,7 +92,7 @@ void PowerWrapper::ListenLoop() {
     while (m_running) {
         const ssize_t bytes_read = read(m_socket_fd, read_buffer, sizeof(read_buffer) - 1);
         if (bytes_read <= 0) {
-            LOGD("[PowerWrapper] AudioService connection closed");
+            LOGD("[PowerWrapper] PowerService connection closed");
             break;
         }
 
@@ -109,9 +109,9 @@ void PowerWrapper::ListenLoop() {
             }
 
             LOGD("[PowerWrapper] IPC message received: %s", line.c_str());
-            const EventType event = ParseAudioEvent(line);
+            const EventType event = ParsePowerEvent(line);
             if (event != EventType::Shutdown && m_callback) {
-                m_callback(AppMessage{ServiceType::Audio, event, line});
+                m_callback(AppMessage{ServiceType::Power, event, line});
             }
         }
     }

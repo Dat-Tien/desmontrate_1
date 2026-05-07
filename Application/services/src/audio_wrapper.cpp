@@ -17,6 +17,9 @@ EventType ParseAudioEvent(const std::string& raw_event) {
     if (raw_event == "AUDIO_BEEP") {
         return EventType::AudioBeep;
     }
+    if (raw_event == "SHUTDOWN") {
+        return EventType::Shutdown;
+    }
     return EventType::Unknown;
 }
 
@@ -110,7 +113,7 @@ void ServiceOneWrapper::ListenLoop() {
 
             LOGD("[ServiceOneWrapper] IPC message received: %s", line.c_str());
             const EventType event = ParseAudioEvent(line);
-            if (event != EventType::Shutdown && m_callback) {
+            if (m_callback) {
                 m_callback(AppMessage{ServiceType::Audio, event, line});
             }
         }
