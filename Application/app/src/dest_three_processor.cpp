@@ -14,11 +14,13 @@ void DestThreeProcessor::InitializeStateMachine() {
     m_state_machine.AddTransition(ProcessorState::IgnitionOn, EventType::ApplicationRecovery,      ProcessorState::Recovery,   [this]() { OnRecovery(); });
     m_state_machine.AddTransition(ProcessorState::Running,    EventType::ApplicationStopRequest,   ProcessorState::Stopped,    [this]() { OnStopRequest(); });
     m_state_machine.AddTransition(ProcessorState::Recovery,   EventType::ApplicationStopRequest,   ProcessorState::Stopped,    [this]() { OnStopRequest(); });
-    m_state_machine.AddTransition(ProcessorState::Stopped,    EventType::PowerIgnitionOff,         ProcessorState::Idle,       [this]() { OnIgnitionOff(); });
+    
+    // Allow IgnitionOff from any state to return to Idle
+    m_state_machine.AddIgnitionOffTransition(EventType::PowerIgnitionOff, ProcessorState::Idle,       [this]() { OnIgnitionOff(); });
 }
 
 void DestThreeProcessor::HandleMessage(const AppMessage& message) {
-    LOGD("[DestThreeProcessor] Handling event: %s , payload= %s" ,ToString(message.event).c_str(), message.payload.c_str());
+    LOGD("[DestThreeProcessor] Handling event: %s , raw_payload= %s" ,ToString(message.event).c_str(), message.raw_payload.c_str());
     m_state_machine.HandleEvent(message.event);
 }
 
@@ -27,23 +29,23 @@ Region DestThreeProcessor::GetRegion() const {
 }
 
 void DestThreeProcessor::OnIgnitionOn() {
-    LOGD("[DestThreeProcessor] Initialize JP-specific ignition flow");
+    LOGD("[DestThreeProcessor] Initialize DestThree-specific Ignition ON flow");
 }
 
 void DestThreeProcessor::OnIgnitionOff() {
-    LOGD("[DestThreeProcessor] Initialize JP-specific ignition off flow");
+    LOGD("[DestThreeProcessor] Initialize DestThree-specific ignition off flow");
 }
 
 void DestThreeProcessor::OnStartRequest() {
-    LOGD("[DestThreeProcessor] Execute JP start request logic");
+    LOGD("[DestThreeProcessor] Execute DestThree start request logic");
 }
 
 void DestThreeProcessor::OnRecovery() {
-    LOGD("[DestThreeProcessor] Execute JP recovery logic");
+    LOGD("[DestThreeProcessor] Execute DestThree recovery logic");
 }
 
 void DestThreeProcessor::OnStopRequest() {
-    LOGD("[DestThreeProcessor] Execute JP stop logic");
+    LOGD("[DestThreeProcessor] Execute DestThree stop logic");
 }
 
 } // namespace app

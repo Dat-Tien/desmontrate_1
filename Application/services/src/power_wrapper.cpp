@@ -8,14 +8,31 @@
 #include <cerrno>
 #include <cstring>
 #include <iostream>
+#include <sstream>
 
 namespace app {
 
 namespace {
 
+std::vector<std::string> SplitPayloadLine(const std::string& line)
+{
+    std::vector<std::string> tokens;
+    std::istringstream iss(line);
+    std::string token;
+
+    while (iss >> token) {
+        tokens.push_back(token);
+    }
+
+    return tokens;
+}
+
 EventType ParsePowerEvent(const std::string& raw_event) {
-    if (raw_event == "Power_BEEP") {
-        return EventType::AudioBeep;
+    if (raw_event == "IGONITION_ON") {
+        return EventType::PowerIgnitionOn;
+    }
+    if (raw_event == "IGONITION_OFF") {
+        return EventType::PowerIgnitionOff;
     }
     return EventType::Unknown;
 }
@@ -109,9 +126,33 @@ void PowerWrapper::ListenLoop() {
             }
 
             LOGD("[PowerWrapper] IPC message received: %s", line.c_str());
-            const EventType event = ParsePowerEvent(line);
-            if (event != EventType::Shutdown && m_callback) {
-                m_callback(AppMessage{ServiceType::Power, event, line});
+
+            const std::vector<std::string> tokens = SplitPayloadLine(line);
+            if (tokens.empty()) {
+                LOGD("[PowerWrapper] Empty payload after parsing");
+                continue;
+            }
+
+            const EventType event = ParsePowerEvent(tokens[0]);
+
+            if (event == EventType::Unknown) {
+                LOGD("[PowerWrapper] Unknown Power event: %s", tokens[0].c_str());
+                continue;
+            }
+
+            std::vector<std::string> payloads;
+            if (tokens.size() > 1) {
+                payloads.assign(tokens.begin() + 1, tokens.end());
+            }
+
+            if (m_callback) {
+                AppMessage message;
+                message.service = ServiceType::Power;
+                message.event = event;
+                message.payloads = payloads;
+                message.raw_payload = line;
+
+                m_callback(message);
             }
         }
     }

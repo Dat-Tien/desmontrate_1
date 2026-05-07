@@ -8,13 +8,27 @@
 #include <cerrno>
 #include <cstring>
 #include <iostream>
+#include <sstream>
 
 namespace app {
 
 namespace {
 
+std::vector<std::string> SplitPayloadLine(const std::string& line)
+{
+    std::vector<std::string> tokens;
+    std::istringstream iss(line);
+    std::string token;
+
+    while (iss >> token) {
+        tokens.push_back(token);
+    }
+
+    return tokens;
+}
+
 EventType ParseHmiEvent(const std::string& raw_event) {
-    if (raw_event == "Hmi_BEEP") {
+    if (raw_event == "HMI_BEEP") {
         return EventType::HmiBeep;
     }
     return EventType::Unknown;
@@ -109,9 +123,33 @@ void HmiWrapper::ListenLoop() {
             }
 
             LOGD("[HmiWrapper] IPC message received: %s", line.c_str());
-            const EventType event = ParseHmiEvent(line);
-            if (event != EventType::Shutdown && m_callback) {
-                m_callback(AppMessage{ServiceType::HMI, event, line});
+
+            const std::vector<std::string> tokens = SplitPayloadLine(line);
+            if (tokens.empty()) {
+                LOGD("[HmiWrapper] Empty payload after parsing");
+                continue;
+            }
+
+            const EventType event = ParseHmiEvent(tokens[0]);
+
+            if (event == EventType::Unknown) {
+                LOGD("[HmiWrapper] Unknown HMI event: %s", tokens[0].c_str());
+                continue;
+            }
+
+            std::vector<std::string> payloads;
+            if (tokens.size() > 1) {
+                payloads.assign(tokens.begin() + 1, tokens.end());
+            }
+
+            if (m_callback) {
+                AppMessage message;
+                message.service = ServiceType::HMI;
+                message.event = event;
+                message.payloads = payloads;
+                message.raw_payload = line;
+
+                m_callback(message);
             }
         }
     }

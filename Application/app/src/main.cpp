@@ -31,7 +31,7 @@ void PushToQueue(MessageQueue<AppMessage>& queue, const AppMessage& message) {
     LOGD("[Main] Queueing message from service=%s, event=%s, payload=%s",
          ToString(message.service).c_str(),
          ToString(message.event).c_str(),
-         message.payload.c_str());
+         message.raw_payload.c_str());
     queue.Push(message);
 }
 
@@ -54,7 +54,7 @@ int main() {
     ProcessorManager& processor_manager = ProcessorManager::GetInstance();
 
     HmiWrapper& hmi_wrapper = HmiWrapper::GetInstance();
-    ServiceOneWrapper& audio_wrapper = ServiceOneWrapper::GetInstance();
+    AudioWrapper& audio_wrapper = AudioWrapper::GetInstance();
     RegionWrapper& region_wrapper = RegionWrapper::GetInstance();
     PowerWrapper& power_wrapper = PowerWrapper::GetInstance();
 
@@ -86,8 +86,8 @@ int main() {
             }
 
             if (message.event == EventType::RegionChanged) {
-                const auto region = (message.payload == "RegionOne") ? Region::RegionOne : Region::RegionThree;
-                processor_manager.SetRegion(region);
+                // const auto region = (message.payload == "RegionOne") ? Region::RegionOne : Region::RegionThree;
+                processor_manager.SetRegion(Region::RegionOne);
                 continue;
             }
 

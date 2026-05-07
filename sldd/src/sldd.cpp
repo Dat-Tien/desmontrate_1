@@ -8,72 +8,71 @@
 #include <cstring>
 #include <string>
 #include <vector>
-#include <map>
-
-namespace {
-
-constexpr int kMinMessages = 1;
-constexpr int kMaxMessages = 3;
-
-const std::map<std::string, std::string> socket_map = {
-    {"audio", "/tmp/_audio_service_cmd.sock"},
-    {"hmi", "/tmp/_hmi_service_cmd.sock"},
-    {"power", "/tmp/_power_service_cmd.sock"},
-    {"region", "/tmp/_region_service_cmd.sock"}
-};
-
-} // namespace
 
 namespace sldd {
 
 bool SlddClient::Run(int argc, char* argv[]) {
     if (argc < 3) {
+        LOGE("[SLDD] Missing service handle or payload");
         PrintUsage();
         return false;
     }
 
-    const std::string domain = argv[1];
-    std::vector<std::string> messages;
+    const std::string service = argv[1];
+
+    if (!IsSupportedService(service)) {
+        LOGE("[SLDD] Unsupported service handle: %s", service.c_str());
+        PrintUsage();
+        return false;
+    }
+
+    std::vector<std::string> payloads;
     for (int i = 2; i < argc; ++i) {
-        messages.emplace_back(argv[i]);
+        payloads.emplace_back(argv[i]);
     }
 
-    if (socket_map.find(domain) != socket_map.end()) {
-        return HandleCommand(domain, messages);
-    }
-    else
-    {
-        LOGE("[SLDD] Unsupported domain: %s", domain.c_str());
+    if (payloads.size() < kMinPayloadCount || payloads.size() > kMaxPayloadCount) {
+        LOGE("[SLDD] Invalid payload count: %zu. Expected 1 to 3 payload values",
+             payloads.size());
         PrintUsage();
         return false;
     }
+
+    return HandleCommand(service, payloads);
 }
 
-bool SlddClient::HandleCommand(const std::string& domain, const std::vector<std::string>& messages) {
-    if (messages.size() < kMinMessages || messages.size() > kMaxMessages) {
-        LOGE("[SLDD] command requires 1 to 3 messages, got %zu", messages.size());
-        PrintUsage();
+bool SlddClient::HandleCommand(const std::string& service,
+                               const std::vector<std::string>& payloads) {
+    const auto it = m_socket_map.find(service);
+    if (it == m_socket_map.end()) {
+        LOGE("[SLDD] No socket mapping found for service: %s", service.c_str());
         return false;
     }
 
-    bool ret_val = true;
-    if (socket_map.find(domain) != socket_map.end())
-    {
-        for (const auto& msg : messages) {
-            if (!SendMessage(socket_map.at(domain).c_str(), msg)) {
-                ret_val = false;
-                break;
-            }
+    const std::string payload_line = BuildPayloadLine(payloads);
+
+    LOGI("[SLDD] Service=%s, payload=%s",
+         service.c_str(),
+         payload_line.c_str());
+
+    return SendMessage(it->second, payload_line);
+}
+
+std::string SlddClient::BuildPayloadLine(const std::vector<std::string>& payloads) const {
+    std::string result;
+
+    for (std::size_t i = 0; i < payloads.size(); ++i) {
+        if (i > 0) {
+            result += " ";
         }
-    }
-    else {
-        ret_val = false;
+        result += payloads[i];
     }
 
-    return ret_val;
+    return result;
 }
 
-bool SlddClient::SendMessage(const std::string& socket_path, const std::string& message) {
+bool SlddClient::SendMessage(const std::string& socket_path,
+                             const std::string& message) {
     const int sock = socket(AF_UNIX, SOCK_STREAM, 0);
     if (sock < 0) {
         LOGE("[SLDD] Failed to create socket");
@@ -82,29 +81,57 @@ bool SlddClient::SendMessage(const std::string& socket_path, const std::string& 
 
     sockaddr_un addr {};
     addr.sun_family = AF_UNIX;
-    std::strncpy(addr.sun_path, socket_path.c_str(), sizeof(addr.sun_path) - 1);
 
-    if (connect(sock, reinterpret_cast<sockaddr*>(&addr), sizeof(addr)) < 0) {
-        LOGE("[SLDD] Failed to connect to %s", socket_path.c_str());
+    std::strncpy(addr.sun_path,
+                 socket_path.c_str(),
+                 sizeof(addr.sun_path) - 1);
+
+    if (connect(sock,
+                reinterpret_cast<sockaddr*>(&addr),
+                sizeof(addr)) < 0) {
+        LOGE("[SLDD] Failed to connect to socket: %s", socket_path.c_str());
         close(sock);
         return false;
     }
 
     const std::string line = message + "\n";
+
     const ssize_t written = write(sock, line.c_str(), line.size());
     if (written <= 0) {
-        LOGE("[SLDD] Failed to send message: %s", message.c_str());
+        LOGE("[SLDD] Failed to send payload: %s", message.c_str());
         close(sock);
         return false;
     }
 
-    LOGI("[SLDD] Sent audio message: %s", message.c_str());
+    if (static_cast<std::size_t>(written) != line.size()) {
+        LOGE("[SLDD] Partial write. Expected=%zu, actual=%zd",
+             line.size(),
+             written);
+        close(sock);
+        return false;
+    }
+
+    LOGI("[SLDD] Sent payload to %s: %s",
+         socket_path.c_str(),
+         message.c_str());
+
     close(sock);
     return true;
 }
 
+bool SlddClient::IsSupportedService(const std::string& service) const {
+    return m_socket_map.find(service) != m_socket_map.end();
+}
+
 void SlddClient::PrintUsage() const {
-    LOGI("[SLDD] Usage: sldd audio <msg1> [msg2] [msg3]");
+    LOGI("[SLDD] Usage:");
+    LOGI("[SLDD]   sldd <service> <payload1> [payload2] [payload3]");
+    LOGI("[SLDD] Examples:");
+    LOGI("[SLDD]   sldd audio BEEP");
+    LOGI("[SLDD]   sldd audio BEEP WARNING_TONE");
+    LOGI("[SLDD]   sldd audio BEEP WARNING_TONE HIGH");
+    LOGI("[SLDD] Supported services:");
+    LOGI("[SLDD]   audio, hmi, power, region");
 }
 
 } // namespace sldd

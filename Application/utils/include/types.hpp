@@ -1,6 +1,8 @@
 #pragma once
 
 #include <string>
+#include <vector>
+#include <unordered_map>
 
 namespace app {
 
@@ -52,7 +54,8 @@ enum class EventType {
 struct AppMessage {
     ServiceType service {ServiceType::System};
     EventType event {EventType::Unknown};
-    std::string payload {};
+    std::vector<std::string> payloads {};
+    std::string raw_payload;
 };
 
 std::string ToString(Region region);

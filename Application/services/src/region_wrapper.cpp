@@ -8,10 +8,24 @@
 #include <cerrno>
 #include <cstring>
 #include <iostream>
+#include <sstream>
 
 namespace app {
 
 namespace {
+
+std::vector<std::string> SplitPayloadLine(const std::string& line)
+{
+    std::vector<std::string> tokens;
+    std::istringstream iss(line);
+    std::string token;
+
+    while (iss >> token) {
+        tokens.push_back(token);
+    }
+
+    return tokens;
+}
 
 EventType ParseRegionEvent(const std::string& raw_event) {
     if (raw_event == "REGION_CHANGED") {
@@ -109,14 +123,39 @@ void RegionWrapper::ListenLoop() {
             }
 
             LOGD("[RegionWrapper] IPC message received: %s", line.c_str());
-            const EventType event = ParseRegionEvent(line);
-            if (event != EventType::Shutdown && m_callback) {
-                m_callback(AppMessage{ServiceType::Region, event, line});
+
+            const std::vector<std::string> tokens = SplitPayloadLine(line);
+            if (tokens.empty()) {
+                LOGD("[RegionWrapper] Empty payload after parsing");
+                continue;
+            }
+
+            const EventType event = ParseRegionEvent(tokens[0]);
+
+            if (event == EventType::Unknown) {
+                LOGD("[RegionWrapper] Unknown Region event: %s", tokens[0].c_str());
+                continue;
+            }
+
+            std::vector<std::string> payloads;
+            if (tokens.size() > 1) {
+                payloads.assign(tokens.begin() + 1, tokens.end());
+            }
+
+            if (m_callback) {
+                AppMessage message;
+                message.service = ServiceType::Region;
+                message.event = event;
+                message.payloads = payloads;
+                message.raw_payload = line;
+
+                m_callback(message);
             }
         }
     }
 
     m_running = false;
 }
+
 
 } // namespace app

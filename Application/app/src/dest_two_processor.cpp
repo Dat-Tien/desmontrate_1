@@ -7,7 +7,7 @@ namespace app {
 DestTwoProcessor::DestTwoProcessor() = default;
 
 void DestTwoProcessor::HandleMessage(const AppMessage& message) {
-    LOGD("[DestTwoProcessor] Handling event: %s , payload= %s" ,ToString(message.event).c_str(), message.payload.c_str());
+    LOGD("[DestTwoProcessor] Handling event: %s , raw_payload= %s" ,ToString(message.event).c_str(), message.raw_payload.c_str());
     m_state_machine.HandleEvent(message.event);
 }
 

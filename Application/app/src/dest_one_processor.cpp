@@ -7,7 +7,7 @@ namespace app {
 DestOneProcessor::DestOneProcessor() = default;
 
 void DestOneProcessor::HandleMessage(const AppMessage& message) {
-    LOGD("[DestOneProcessor] Handling event: %s, payload= %s", ToString(message.event).c_str(), message.payload.c_str());
+    LOGD("[DestOneProcessor] Handling event: %s, raw_payload= %s", ToString(message.event).c_str(), message.raw_payload.c_str());
     m_state_machine.HandleEvent(message.event);
 }
 

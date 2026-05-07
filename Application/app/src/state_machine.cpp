@@ -7,6 +7,11 @@ void StateMachine::AddTransition(ProcessorState current, EventType event, Proces
     m_transitions.push_back({current, event, next, std::move(action)});
 }
 
+void StateMachine::AddIgnitionOffTransition(EventType event, ProcessorState next, Action action)
+{
+    m_transitions.push_back({std::nullopt, event, next, std::move(action)});
+}
+
 void StateMachine::HandleEvent(EventType event)
 {
     if (event == EventType::PowerIgnitionOff) {
