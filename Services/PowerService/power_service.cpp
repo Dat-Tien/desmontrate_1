@@ -96,7 +96,7 @@ int main() {
     }
 
     std::cout << "[PowerService] Application connected" << std::endl;
-    std::cout << "[PowerService] Waiting for SLDD commands on " << kPowerCmdSocket << std::endl;
+    std::cout << "[PowerService] Waiting for slld commands on " << kPowerCmdSocket << std::endl;
 
     while (g_running) {
         pollfd pfd{};
@@ -122,7 +122,7 @@ int main() {
                 if (!g_running) {
                     break;
                 }
-                std::cerr << "[PowerService] Failed to accept SLDD client" << std::endl;
+                std::cerr << "[PowerService] Failed to accept slld client" << std::endl;
                 continue;
             }
 
@@ -147,7 +147,7 @@ int main() {
                         continue;
                     }
 
-                    std::cout << "[PowerService] Received from SLDD: " << line << std::endl;
+                    std::cout << "[PowerService] Received from slld: " << line << std::endl;
                     ForwardLine(app_client_fd, line);
                 }
             }

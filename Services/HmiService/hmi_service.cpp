@@ -96,7 +96,7 @@ int main() {
     }
 
     std::cout << "[HmiService] Application connected" << std::endl;
-    std::cout << "[HmiService] Waiting for SLDD commands on " << kHmiCmdSocket << std::endl;
+    std::cout << "[HmiService] Waiting for slld commands on " << kHmiCmdSocket << std::endl;
 
     while (g_running) {
         pollfd pfd{};
@@ -122,7 +122,7 @@ int main() {
                 if (!g_running) {
                     break;
                 }
-                std::cerr << "[HmiService] Failed to accept SLDD client" << std::endl;
+                std::cerr << "[HmiService] Failed to accept slld client" << std::endl;
                 continue;
             }
 
@@ -147,7 +147,7 @@ int main() {
                         continue;
                     }
 
-                    std::cout << "[HmiService] Received from SLDD: " << line << std::endl;
+                    std::cout << "[HmiService] Received from slld: " << line << std::endl;
                     ForwardLine(app_client_fd, line);
                 }
             }

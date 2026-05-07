@@ -1,4 +1,4 @@
-#include "sldd.hpp"
+#include "slld.hpp"
 #include "logger.hpp"
 
 #include <sys/socket.h>
@@ -9,11 +9,11 @@
 #include <string>
 #include <vector>
 
-namespace sldd {
+namespace slld {
 
-bool SlddClient::Run(int argc, char* argv[]) {
+bool slldClient::Run(int argc, char* argv[]) {
     if (argc < 3) {
-        LOGE("[SLDD] Missing service handle or payload");
+        LOGE("[slld] Missing service handle or payload");
         PrintUsage();
         return false;
     }
@@ -21,7 +21,7 @@ bool SlddClient::Run(int argc, char* argv[]) {
     const std::string service = argv[1];
 
     if (!IsSupportedService(service)) {
-        LOGE("[SLDD] Unsupported service handle: %s", service.c_str());
+        LOGE("[slld] Unsupported service handle: %s", service.c_str());
         PrintUsage();
         return false;
     }
@@ -32,7 +32,7 @@ bool SlddClient::Run(int argc, char* argv[]) {
     }
 
     if (payloads.size() < kMinPayloadCount || payloads.size() > kMaxPayloadCount) {
-        LOGE("[SLDD] Invalid payload count: %zu. Expected 1 to 3 payload values",
+        LOGE("[slld] Invalid payload count: %zu. Expected 1 to 3 payload values",
              payloads.size());
         PrintUsage();
         return false;
@@ -41,24 +41,24 @@ bool SlddClient::Run(int argc, char* argv[]) {
     return HandleCommand(service, payloads);
 }
 
-bool SlddClient::HandleCommand(const std::string& service,
+bool slldClient::HandleCommand(const std::string& service,
                                const std::vector<std::string>& payloads) {
     const auto it = m_socket_map.find(service);
     if (it == m_socket_map.end()) {
-        LOGE("[SLDD] No socket mapping found for service: %s", service.c_str());
+        LOGE("[slld] No socket mapping found for service: %s", service.c_str());
         return false;
     }
 
     const std::string payload_line = BuildPayloadLine(payloads);
 
-    LOGI("[SLDD] Service=%s, payload=%s",
+    LOGI("[slld] Service=%s, payload=%s",
          service.c_str(),
          payload_line.c_str());
 
     return SendMessage(it->second, payload_line);
 }
 
-std::string SlddClient::BuildPayloadLine(const std::vector<std::string>& payloads) const {
+std::string slldClient::BuildPayloadLine(const std::vector<std::string>& payloads) const {
     std::string result;
 
     for (std::size_t i = 0; i < payloads.size(); ++i) {
@@ -71,11 +71,11 @@ std::string SlddClient::BuildPayloadLine(const std::vector<std::string>& payload
     return result;
 }
 
-bool SlddClient::SendMessage(const std::string& socket_path,
+bool slldClient::SendMessage(const std::string& socket_path,
                              const std::string& message) {
     const int sock = socket(AF_UNIX, SOCK_STREAM, 0);
     if (sock < 0) {
-        LOGE("[SLDD] Failed to create socket");
+        LOGE("[slld] Failed to create socket");
         return false;
     }
 
@@ -89,7 +89,7 @@ bool SlddClient::SendMessage(const std::string& socket_path,
     if (connect(sock,
                 reinterpret_cast<sockaddr*>(&addr),
                 sizeof(addr)) < 0) {
-        LOGE("[SLDD] Failed to connect to socket: %s", socket_path.c_str());
+        LOGE("[slld] Failed to connect to socket: %s", socket_path.c_str());
         close(sock);
         return false;
     }
@@ -98,20 +98,20 @@ bool SlddClient::SendMessage(const std::string& socket_path,
 
     const ssize_t written = write(sock, line.c_str(), line.size());
     if (written <= 0) {
-        LOGE("[SLDD] Failed to send payload: %s", message.c_str());
+        LOGE("[slld] Failed to send payload: %s", message.c_str());
         close(sock);
         return false;
     }
 
     if (static_cast<std::size_t>(written) != line.size()) {
-        LOGE("[SLDD] Partial write. Expected=%zu, actual=%zd",
+        LOGE("[slld] Partial write. Expected=%zu, actual=%zd",
              line.size(),
              written);
         close(sock);
         return false;
     }
 
-    LOGI("[SLDD] Sent payload to %s: %s",
+    LOGI("[slld] Sent payload to %s: %s",
          socket_path.c_str(),
          message.c_str());
 
@@ -119,24 +119,24 @@ bool SlddClient::SendMessage(const std::string& socket_path,
     return true;
 }
 
-bool SlddClient::IsSupportedService(const std::string& service) const {
+bool slldClient::IsSupportedService(const std::string& service) const {
     return m_socket_map.find(service) != m_socket_map.end();
 }
 
-void SlddClient::PrintUsage() const {
-    LOGI("[SLDD] Usage:");
-    LOGI("[SLDD]   sldd <service> <payload1> [payload2] [payload3]");
-    LOGI("[SLDD] Examples:");
-    LOGI("[SLDD]   sldd audio BEEP");
-    LOGI("[SLDD]   sldd audio BEEP WARNING_TONE");
-    LOGI("[SLDD]   sldd audio BEEP WARNING_TONE HIGH");
-    LOGI("[SLDD] Supported services:");
-    LOGI("[SLDD]   audio, hmi, power, region");
+void slldClient::PrintUsage() const {
+    LOGI("[slld] Usage:");
+    LOGI("[slld]   slld <service> <payload1> [payload2] [payload3]");
+    LOGI("[slld] Examples:");
+    LOGI("[slld]   slld audio BEEP");
+    LOGI("[slld]   slld audio BEEP WARNING_TONE");
+    LOGI("[slld]   slld audio BEEP WARNING_TONE HIGH");
+    LOGI("[slld] Supported services:");
+    LOGI("[slld]   audio, hmi, power, region");
 }
 
-} // namespace sldd
+} // namespace slld
 
 int main(int argc, char* argv[]) {
-    sldd::SlddClient client;
+    slld::slldClient client;
     return client.Run(argc, argv) ? 0 : 1;
 }

@@ -96,7 +96,7 @@ int main() {
     }
 
     std::cout << "[AudioService] Application connected" << std::endl;
-    std::cout << "[AudioService] Waiting for SLDD commands on " << kAudioCmdSocket << std::endl;
+    std::cout << "[AudioService] Waiting for slld commands on " << kAudioCmdSocket << std::endl;
 
     while (g_running) {
         pollfd pfd{};
@@ -122,7 +122,7 @@ int main() {
                 if (!g_running) {
                     break;
                 }
-                std::cerr << "[AudioService] Failed to accept SLDD client" << std::endl;
+                std::cerr << "[AudioService] Failed to accept slld client" << std::endl;
                 continue;
             }
 
@@ -147,7 +147,7 @@ int main() {
                         continue;
                     }
 
-                    std::cout << "[AudioService] Received from SLDD: " << line << std::endl;
+                    std::cout << "[AudioService] Received from slld: " << line << std::endl;
                     ForwardLine(app_client_fd, line);
                 }
             }

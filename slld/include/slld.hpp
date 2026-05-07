@@ -4,9 +4,9 @@
 #include <vector>
 #include <unordered_map>
 
-namespace sldd {
+namespace slld {
 
-class SlddClient {
+class slldClient {
 public:
     bool Run(int argc, char* argv[]);
 
@@ -35,4 +35,4 @@ private:
     };
 };
 
-} // namespace sldd
+} // namespace slld

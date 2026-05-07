@@ -96,7 +96,7 @@ int main() {
     }
 
     std::cout << "[RegionService] Application connected" << std::endl;
-    std::cout << "[RegionService] Waiting for SLDD commands on " << kRegionCmdSocket << std::endl;
+    std::cout << "[RegionService] Waiting for slld commands on " << kRegionCmdSocket << std::endl;
 
     while (g_running) {
         pollfd pfd{};
@@ -122,7 +122,7 @@ int main() {
                 if (!g_running) {
                     break;
                 }
-                std::cerr << "[RegionService] Failed to accept SLDD client" << std::endl;
+                std::cerr << "[RegionService] Failed to accept slld client" << std::endl;
                 continue;
             }
 
@@ -147,7 +147,7 @@ int main() {
                         continue;
                     }
 
-                    std::cout << "[RegionService] Received from SLDD: " << line << std::endl;
+                    std::cout << "[RegionService] Received from slld: " << line << std::endl;
                     ForwardLine(app_client_fd, line);
                 }
             }
