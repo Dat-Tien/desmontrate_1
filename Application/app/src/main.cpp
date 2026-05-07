@@ -86,8 +86,27 @@ int main() {
             }
 
             if (message.event == EventType::RegionChanged) {
-                // const auto region = (message.payload == "RegionOne") ? Region::RegionOne : Region::RegionThree;
-                processor_manager.SetRegion(Region::RegionOne);
+                if (message.payloads.empty()) {
+                    LOGD("[AppThread] RegionChanged event with empty payload, ignoring");
+                    continue;
+                }
+                
+                auto region = Region::Unknown;
+                if (message.payloads[0] == "RegionOne") {
+                    LOGD("[AppThread] Region changed to RegionOne");
+                    region = Region::RegionOne;
+                } else if (message.payloads[0] == "RegionTwo") {
+                    LOGD("[AppThread] Region changed to RegionTwo");
+                    region = Region::RegionTwo;
+                } else if (message.payloads[0] == "RegionThree") {
+                    LOGD("[AppThread] Region changed to RegionThree");
+                    region = Region::RegionThree;
+                } else {
+                    LOGD("[AppThread] Unknown region in payload: %s", message.payloads[0].c_str());
+                    continue;
+                }
+
+                processor_manager.SetRegion(region);
                 continue;
             }
 

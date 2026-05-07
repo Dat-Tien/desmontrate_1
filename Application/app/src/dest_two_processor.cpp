@@ -16,7 +16,7 @@ Region DestTwoProcessor::GetRegion() const {
 }
 
 void DestTwoProcessor::OnStartRequest() {
-    LOGD("[DestTwoProcessor] Execute RegionThree start request logic");
+    LOGD("[DestTwoProcessor] Execute RegionTwo start request logic");
 }
 
 void DestTwoProcessor::OnRecovery() {
