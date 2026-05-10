@@ -28,11 +28,17 @@ std::vector<std::string> SplitPayloadLine(const std::string& line)
 }
 
 EventType ParsePowerEvent(const std::string& raw_event) {
-    if (raw_event == "IGONITION_ON") {
+    if (raw_event == "IGNITION_ON" || raw_event == "IGONITION_ON" || raw_event == "IG_ON" || raw_event == "POWER_IGNITION_ON") {
         return EventType::PowerIgnitionOn;
     }
-    if (raw_event == "IGONITION_OFF") {
+    if (raw_event == "IGNITION_OFF" || raw_event == "IGONITION_OFF" || raw_event == "IG_OFF" || raw_event == "POWER_IGNITION_OFF") {
         return EventType::PowerIgnitionOff;
+    }
+    if (raw_event == "POWER_SLEEP") {
+        return EventType::PowerSleep;
+    }
+    if (raw_event == "POWER_WAKE") {
+        return EventType::PowerWake;
     }
     return EventType::Unknown;
 }

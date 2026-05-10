@@ -10,9 +10,10 @@ public:
     void HandleMessage(const AppMessage& message) override;
 
 protected:
-    virtual void InitializeStateMachine() override;
-    virtual void OnIgnitionOn() override;
-    virtual void OnIgnitionOff() override;
+    void InitializeStateMachine() override;
+    void OnIgnitionOn() override;
+    void OnIgnitionOff() override;
+    void OnTimeoutEvent() override;
 };
 
 } // namespace app

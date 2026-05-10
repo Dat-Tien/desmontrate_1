@@ -9,6 +9,9 @@ find_package(Threads REQUIRED)
 
 add_executable(_arch_demo
     app/src/main.cpp
+    app/src/application.cpp
+    app/src/event_handler.cpp
+    app/src/timer_manager.cpp
     app/src/state_machine.cpp
     app/src/processor_manager.cpp
     app/src/dest_one_processor.cpp

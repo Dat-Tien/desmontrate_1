@@ -28,13 +28,13 @@ std::vector<std::string> SplitPayloadLine(const std::string& line)
 }
 
 EventType ParseAudioEvent(const std::string& raw_event) {
-    if (raw_event == "AUDIO_BEEP") {
+    if (raw_event == "AUDIO_BEEP" || raw_event == "BEEP") {
         return EventType::AudioBeep;
     }
-    else if (raw_event == "AUDIO_START") {
+    if (raw_event == "AUDIO_START" || raw_event == "START") {
         return EventType::AudioStart;
     }
-    else if (raw_event == "AUDIO_STOP") {
+    if (raw_event == "AUDIO_STOP" || raw_event == "STOP") {
         return EventType::AudioStop;
     }
     return EventType::Unknown;

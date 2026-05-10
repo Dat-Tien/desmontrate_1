@@ -11,12 +11,13 @@ public:
     Region GetRegion() const override;
 
 protected:
-    virtual void InitializeStateMachine() override;
-    virtual void OnIgnitionOn() override;
-    virtual void OnIgnitionOff() override;
-    virtual void OnStartRequest() override;
-    virtual void OnRecovery() override;
-    virtual void OnStopRequest() override;
+    void InitializeStateMachine() override;
+    void OnIgnitionOn() override;
+    void OnIgnitionOff() override;
+    void OnStartRequest() override;
+    void OnRecovery() override;
+    void OnStopRequest() override;
+    void OnTimeoutEvent() override;
 };
 
 } // namespace app

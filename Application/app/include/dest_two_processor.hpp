@@ -11,9 +11,10 @@ public:
     Region GetRegion() const override;
 
 protected:
-    virtual void OnStartRequest() override;
-    virtual void OnRecovery() override;
-    virtual void OnStopRequest() override;
+    void OnStartRequest() override;
+    void OnRecovery() override;
+    void OnStopRequest() override;
+    void OnTimeoutEvent() override;
 };
 
 } // namespace app

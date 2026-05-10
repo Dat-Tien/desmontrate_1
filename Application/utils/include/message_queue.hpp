@@ -4,17 +4,28 @@
 #include <mutex>
 #include <queue>
 
+#include "logger.hpp"
+
 namespace app {
 
 template <typename T>
 class MessageQueue {
 public:
+    MessageQueue(const uint16_t queue_size) : m_queue_size(queue_size) {
+    }
+
     void Push(const T& item) {
         {
             std::lock_guard<std::mutex> lock(m_mutex);
             if (m_stopped) {
                 return;
             }
+            else if (m_queue.size() >= m_queue_size)
+            {
+                // LOGW("Queue is full, drop the event %s", ToString(item.event).c_str());
+                return;
+            }
+
             m_queue.push(item);
         }
         m_cv.notify_one();
@@ -45,6 +56,7 @@ private:
     std::mutex m_mutex;
     std::condition_variable m_cv;
     std::queue<T> m_queue;
+    uint16_t m_queue_size{1024};
     bool m_stopped{false};
 };
 

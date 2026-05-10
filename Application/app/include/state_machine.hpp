@@ -1,10 +1,9 @@
 #pragma once
 
 #include <functional>
-#include <iostream>
+#include <optional>
 #include <utility>
 #include <vector>
-#include <optional>
 
 #include "types.hpp"
 #include "logger.hpp"
@@ -24,7 +23,7 @@ enum class ProcessorState {
 std::string ToString(ProcessorState state);
 
 struct StateTransition {
-    std::optional<ProcessorState> current_state;
+    std::optional<ProcessorState> current_state;  // std::nullopt means any state / global transition
     EventType event;
     ProcessorState next_state;
     Action action;
@@ -36,9 +35,13 @@ public:
         : m_current_state(initial_state) {}
 
     void AddTransition(ProcessorState current, EventType event, ProcessorState next, Action action);
+    void AddGlobalTransition(EventType event, ProcessorState next, Action action);
     void AddIgnitionOffTransition(EventType event, ProcessorState next, Action action);
     void HandleEvent(EventType event);
     ProcessorState GetCurrentState() const;
+
+private:
+    void ExecuteTransition(const StateTransition& transition);
 
 private:
     ProcessorState m_current_state;

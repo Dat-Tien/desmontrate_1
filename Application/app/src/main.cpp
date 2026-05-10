@@ -1,149 +1,45 @@
-#include <atomic>
-#include <csignal>
-#include <chrono>
-#include <iostream>
-#include <thread>
+#include "application.hpp"
+#include "logger.hpp"
 
-#include "audio_wrapper.hpp"
-#include "hmi_wrapper.hpp"
-#include "message_queue.hpp"
-#include "processor_manager.hpp"
-#include "power_wrapper.hpp"
-#include "region_wrapper.hpp"
-#include "types.hpp"
+#include <atomic>
+#include <chrono>
+#include <csignal>
+#include <thread>
 
 namespace {
 
-using namespace app;
+std::atomic<bool> g_stop_requested{false};
 
-std::atomic<bool> g_running{true};
-MessageQueue<AppMessage>* g_queue = nullptr;
-
-void SignalHandler(int signal) {
-    LOGD("[Main] Signal received: %d", signal);
-    g_running = false;
-    if (g_queue != nullptr) {
-        g_queue->Stop();
-    }
-}
-
-void PushToQueue(MessageQueue<AppMessage>& queue, const AppMessage& message) {
-    LOGD("[Main] Queueing message from service=%s, event=%s, payload=%s",
-         ToString(message.service).c_str(),
-         ToString(message.event).c_str(),
-         message.raw_payload.c_str());
-    queue.Push(message);
+void SignalHandler(int)
+{
+    g_stop_requested = true;
 }
 
 } // namespace
 
-int main() {
-    using namespace app;
-
+int main()
+{
     std::signal(SIGINT, SignalHandler);
     std::signal(SIGTERM, SignalHandler);
 
-    constexpr const char* kAudioSocketPath = "/tmp/_audio_service.sock";
-    constexpr const char* kHmiSocketPath = "/tmp/_hmi_service.sock";
-    constexpr const char* kPowerSocketPath = "/tmp/_power_service.sock";
-    constexpr const char* kRegionSocketPath = "/tmp/_region_service.sock";
+    app::Application application;
 
-    MessageQueue<AppMessage> queue;
-    g_queue = &queue;
-
-    ProcessorManager& processor_manager = ProcessorManager::GetInstance();
-
-    HmiWrapper& hmi_wrapper = HmiWrapper::GetInstance();
-    AudioWrapper& audio_wrapper = AudioWrapper::GetInstance();
-    RegionWrapper& region_wrapper = RegionWrapper::GetInstance();
-    PowerWrapper& power_wrapper = PowerWrapper::GetInstance();
-
-    hmi_wrapper.RegisterCallback([&queue](const AppMessage& message) {
-        PushToQueue(queue, message);
-    });
-
-    audio_wrapper.RegisterCallback([&queue](const AppMessage& message) {
-        PushToQueue(queue, message);
-    });
-
-    region_wrapper.RegisterCallback([&queue](const AppMessage& message) {
-        PushToQueue(queue, message);
-    });
-
-    power_wrapper.RegisterCallback([&queue](const AppMessage& message) {
-        PushToQueue(queue, message);
-    });
-
-    std::thread app_thread([&]() {
-        bool running = true;
-        AppMessage message{};
-
-        while (running && queue.WaitAndPop(message)) {
-            if (message.event == EventType::Shutdown) {
-                LOGD("[AppThread] Shutdown received");
-                running = false;
-                break;
-            }
-
-            if (message.event == EventType::RegionChanged) {
-                if (message.payloads.empty()) {
-                    LOGD("[AppThread] RegionChanged event with empty payload, ignoring");
-                    continue;
-                }
-                
-                auto region = Region::Unknown;
-                if (message.payloads[0] == "RegionOne") {
-                    LOGD("[AppThread] Region changed to RegionOne");
-                    region = Region::RegionOne;
-                } else if (message.payloads[0] == "RegionTwo") {
-                    LOGD("[AppThread] Region changed to RegionTwo");
-                    region = Region::RegionTwo;
-                } else if (message.payloads[0] == "RegionThree") {
-                    LOGD("[AppThread] Region changed to RegionThree");
-                    region = Region::RegionThree;
-                } else {
-                    LOGD("[AppThread] Unknown region in payload: %s", message.payloads[0].c_str());
-                    continue;
-                }
-
-                processor_manager.SetRegion(region);
-                continue;
-            }
-
-            processor_manager.HandleMessage(message);
-        }
-
-        LOGD("[AppThread] Exiting");
-    });
-
-    LOGD("===  Architecture Demo Start ===");
-
-    if (audio_wrapper.Connect(kAudioSocketPath)) {
-        audio_wrapper.StartListening();
-    } else {
-        LOGD("[Main] AudioService is not connected. Start AudioService first for IPC demo.");
+    if (!application.Initialize()) {
+        LOGE("[Main] Application initialization failed");
+        return 1;
     }
 
-    if (hmi_wrapper.Connect(kHmiSocketPath)) {
-        hmi_wrapper.StartListening();
-    } else {
-        LOGD("[Main] HmiService is not connected. Start HmiService first for IPC demo.");
+    if (!application.Start()) {
+        LOGE("[Main] Application start failed");
+        return 1;
     }
 
-    if (region_wrapper.Connect(kRegionSocketPath)) {
-        region_wrapper.StartListening();
-    } else {
-        LOGD("[Main] RegionService is not connected. Start RegionService first for IPC demo.");
+    while (!g_stop_requested.load()) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(200));
     }
 
-    if (power_wrapper.Connect(kPowerSocketPath)) {
-        power_wrapper.StartListening();
-    } else {
-        LOGD("[Main] PowerService is not connected. Start PowerService first for IPC demo.");
-    }
+    LOGD("[Main] Stop signal received");
+    application.RequestStop();
 
-    app_thread.join();
-
-    LOGD("===  Architecture Demo End ===");
-    return 0;
+    return application.Wait();
 }

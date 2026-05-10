@@ -1,6 +1,6 @@
 #include "western_processor.hpp"
 
-#include <iostream>
+#include <chrono>
 
 namespace app {
 
@@ -14,22 +14,30 @@ void WesternProcessor::InitializeStateMachine() {
     m_state_machine.AddTransition(ProcessorState::IgnitionOn, EventType::ApplicationRecovery,      ProcessorState::Recovery,   [this]() { OnRecovery(); });
     m_state_machine.AddTransition(ProcessorState::Running,    EventType::ApplicationStopRequest,   ProcessorState::Stopped,    [this]() { OnStopRequest(); });
     m_state_machine.AddTransition(ProcessorState::Recovery,   EventType::ApplicationStopRequest,   ProcessorState::Stopped,    [this]() { OnStopRequest(); });
+    m_state_machine.AddTransition(ProcessorState::Running,    EventType::ApplicatiOnTimeoutEvent, ProcessorState::Recovery,  [this]() { OnTimeoutEvent(); });
 
-    // // Allow IgnitionOff from any state to return to Idle
-    m_state_machine.AddIgnitionOffTransition(EventType::PowerIgnitionOff, ProcessorState::Idle,       [this]() { OnIgnitionOff(); });
+    // Global transition: IG_OFF is valid from any current state.
+    m_state_machine.AddIgnitionOffTransition(EventType::PowerIgnitionOff, ProcessorState::Idle, [this]() { OnIgnitionOff(); });
 }
 
 void WesternProcessor::HandleMessage(const AppMessage& message) {
-    LOGD("[WesternProcessor] Handling event: %s, raw_payload= %s", ToString(message.event).c_str(), message.raw_payload.c_str());
+    LOGD("[WesternProcessor] Handling event=%s, raw_payload=%s",
+         ToString(message.event).c_str(),
+         message.raw_payload.c_str());
     m_state_machine.HandleEvent(message.event);
 }
 
 void WesternProcessor::OnIgnitionOn() {
-    LOGD("[WesternProcessor] Initialize RegionOne-specific ignition flow");
+    LOGD("[WesternProcessor] Common ignition ON flow");
 }
 
 void WesternProcessor::OnIgnitionOff() {
-    LOGD("[WesternProcessor] Initialize RegionOne-specific ignition flow");
+    LOGD("[WesternProcessor] Common ignition OFF cleanup");
+    CancelAllTimers();
+}
+
+void WesternProcessor::OnTimeoutEvent() {
+    LOGD("[WesternProcessor] Running timeout occurred. Move to recovery flow");
 }
 
 } // namespace app

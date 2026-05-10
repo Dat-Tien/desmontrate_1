@@ -6,6 +6,8 @@ std::string ToString(Region region) {
     switch (region) {
         case Region::RegionThree: return "RegionThree";
         case Region::RegionOne: return "RegionOne";
+        case Region::RegionTwo: return "RegionTwo";
+        case Region::Unknown: return "Unknown";
         default: return "Unknown";
     }
 }
@@ -15,6 +17,8 @@ std::string ToString(ServiceType service) {
         case ServiceType::HMI: return "HMI";
         case ServiceType::Audio: return "Audio";
         case ServiceType::Region: return "Region";
+        case ServiceType::Power: return "Power";
+        case ServiceType::Internal: return "Internal";
         case ServiceType::System: return "System";
         default: return "Unknown";
     }
@@ -46,8 +50,12 @@ std::string ToString(EventType event) {
         case EventType::ApplicationResetRequest: return "ApplicationResetRequest";
         case EventType::ApplicationUpdateRequest: return "ApplicationUpdateRequest";
         case EventType::ApplicationStatusRequest: return "ApplicationStatusRequest";
+        case EventType::ApplicatiOnTimeoutEvent: return "ApplicatiOnTimeoutEvent";
+        case EventType::ApplicationRecoveryTimeout: return "ApplicationRecoveryTimeout";
+        case EventType::ApplicationHeartbeatTimeout: return "ApplicationHeartbeatTimeout";
         // Common Events
         case EventType::Shutdown: return "Shutdown";
+        case EventType::Unknown: return "Unknown";
         default: return "Unknown";
     }
 }

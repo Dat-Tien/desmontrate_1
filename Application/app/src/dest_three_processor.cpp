@@ -48,4 +48,8 @@ void DestThreeProcessor::OnStopRequest() {
     LOGD("[DestThreeProcessor] Execute DestThree stop logic");
 }
 
+void DestThreeProcessor::OnTimeoutEvent() {
+    LOGD("[DestThreeProcessor] OnTimeoutEvent");
+}
+
 } // namespace app

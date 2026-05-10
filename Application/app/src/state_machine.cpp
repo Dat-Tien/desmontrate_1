@@ -7,30 +7,53 @@ void StateMachine::AddTransition(ProcessorState current, EventType event, Proces
     m_transitions.push_back({current, event, next, std::move(action)});
 }
 
-void StateMachine::AddIgnitionOffTransition(EventType event, ProcessorState next, Action action)
+void StateMachine::AddGlobalTransition(EventType event, ProcessorState next, Action action)
 {
     m_transitions.push_back({std::nullopt, event, next, std::move(action)});
 }
 
+void StateMachine::AddIgnitionOffTransition(EventType event, ProcessorState next, Action action)
+{
+    AddGlobalTransition(event, next, std::move(action));
+}
+
 void StateMachine::HandleEvent(EventType event)
 {
-    if (event == EventType::PowerIgnitionOff) {
-        LOGE("[StateMachine] Ignoring unknown event");
-        return;
-    }
+    // Exact state-specific transitions have priority over global transitions.
     for (const auto& transition : m_transitions) {
-        if (transition.current_state == m_current_state && transition.event == event) {
-            LOGD("[StateMachine] Transition %s -> %s", ToString(m_current_state).c_str(), ToString(transition.next_state).c_str());
-            if (transition.action) {
-                transition.action();
-            }
-
-            m_current_state = transition.next_state;
+        if (transition.current_state.has_value() &&
+            transition.current_state.value() == m_current_state &&
+            transition.event == event) {
+            ExecuteTransition(transition);
             return;
         }
     }
 
-    LOGE("[StateMachine] No transition found for state= %s, event= %s", ToString(m_current_state).c_str(), ToString(event).c_str());
+    // Global transition fallback. Used for high-priority events like IG_OFF.
+    for (const auto& transition : m_transitions) {
+        if (!transition.current_state.has_value() && transition.event == event) {
+            ExecuteTransition(transition);
+            return;
+        }
+    }
+
+    LOGE("[StateMachine] No transition found for state=%s, event=%s",
+         ToString(m_current_state).c_str(),
+         ToString(event).c_str());
+}
+
+void StateMachine::ExecuteTransition(const StateTransition& transition)
+{
+    LOGD("[StateMachine] Transition %s -> %s by event=%s",
+         ToString(m_current_state).c_str(),
+         ToString(transition.next_state).c_str(),
+         ToString(transition.event).c_str());
+
+    if (transition.action) {
+        transition.action();
+    }
+
+    m_current_state = transition.next_state;
 }
 
 ProcessorState StateMachine::GetCurrentState() const {

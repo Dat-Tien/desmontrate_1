@@ -14,6 +14,7 @@ protected:
     void OnStartRequest() override;
     void OnRecovery() override;
     void OnStopRequest() override;
+    void OnTimeoutEvent() override;
 };
 
 } // namespace app

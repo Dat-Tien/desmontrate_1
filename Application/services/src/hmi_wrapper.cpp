@@ -28,8 +28,17 @@ std::vector<std::string> SplitPayloadLine(const std::string& line)
 }
 
 EventType ParseHmiEvent(const std::string& raw_event) {
-    if (raw_event == "HMI_BEEP") {
+    if (raw_event == "HMI_BEEP" || raw_event == "BEEP") {
         return EventType::HmiBeep;
+    }
+    if (raw_event == "APP_START" || raw_event == "START_REQUEST" || raw_event == "APPLICATION_START_REQUEST") {
+        return EventType::ApplicationStartRequest;
+    }
+    if (raw_event == "APP_RECOVERY" || raw_event == "RECOVERY" || raw_event == "APPLICATION_RECOVERY") {
+        return EventType::ApplicationRecovery;
+    }
+    if (raw_event == "APP_STOP" || raw_event == "STOP_REQUEST" || raw_event == "APPLICATION_STOP_REQUEST") {
+        return EventType::ApplicationStopRequest;
     }
     return EventType::Unknown;
 }

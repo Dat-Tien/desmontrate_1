@@ -27,4 +27,8 @@ void DestTwoProcessor::OnStopRequest() {
     LOGD("[DestTwoProcessor] Execute RegionTwo stop logic");
 }
 
+void DestTwoProcessor::OnTimeoutEvent() {
+    LOGD("[DestTwoProcessor] OnTimeoutEvent");
+}
+
 } // namespace app

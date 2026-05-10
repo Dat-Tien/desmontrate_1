@@ -1,5 +1,6 @@
 #pragma once
 
+#include <functional>
 #include <string>
 #include <vector>
 #include <unordered_map>
@@ -18,6 +19,7 @@ enum class ServiceType {
     Audio,
     Region,
     Power,
+    Internal,
     System
 };
 
@@ -46,6 +48,9 @@ enum class EventType {
     ApplicationResetRequest,
     ApplicationUpdateRequest,
     ApplicationStatusRequest,
+    ApplicatiOnTimeoutEvent,
+    ApplicationRecoveryTimeout,
+    ApplicationHeartbeatTimeout,
     // Common Events
     Unknown,
     Shutdown
@@ -57,6 +62,8 @@ struct AppMessage {
     std::vector<std::string> payloads {};
     std::string raw_payload;
 };
+
+using EventPoster = std::function<void(const AppMessage&)>;
 
 std::string ToString(Region region);
 std::string ToString(ServiceType service);

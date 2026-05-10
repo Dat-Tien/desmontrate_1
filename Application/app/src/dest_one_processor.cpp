@@ -27,4 +27,8 @@ void DestOneProcessor::OnStopRequest() {
     LOGD("[DestOneProcessor] Execute RegionOne stop logic");
 }
 
+void DestOneProcessor::OnTimeoutEvent() {
+    LOGD("[DestOneProcessor] OnTimeoutEvent");
+}
+
 } // namespace app
