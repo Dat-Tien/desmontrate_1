@@ -25,6 +25,7 @@ public:
     bool Connect(const std::string& socket_path);
     void StartListening();
     void Stop();
+    bool RequestPlayStopCompletedSound();
 
 private:
     AudioWrapper();

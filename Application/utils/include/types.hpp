@@ -20,6 +20,7 @@ enum class ServiceType {
     Region,
     Power,
     Internal,
+    ApplicationTimerTimeout,
     System
 };
 
@@ -28,6 +29,7 @@ enum class EventType {
     AudioStart,
     AudioStop,
     AudioBeep,
+    AudioPlayCompleted,
     // Power Events
     PowerStart,
     PowerStop,
@@ -48,9 +50,16 @@ enum class EventType {
     ApplicationResetRequest,
     ApplicationUpdateRequest,
     ApplicationStatusRequest,
-    ApplicatiOnTimeoutEvent,
+    // Application Timeout events
+    ApplicationStartRequestTimeout,
     ApplicationRecoveryTimeout,
+    ApplicationStopRequestTimeout,
+    ApplicationResetRequestTimeout,
+    ApplicatiOnTimeoutEvent,
     ApplicationHeartbeatTimeout,
+    // TESTING
+    TestingApplicationStartRequestTimer,
+    // End TESTING
     // Common Events
     Unknown,
     Shutdown

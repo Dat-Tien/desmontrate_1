@@ -21,10 +21,12 @@ void DestTwoProcessor::OnStartRequest() {
 
 void DestTwoProcessor::OnRecovery() {
     LOGD("[DestTwoProcessor] Execute RegionTwo recovery logic");
+    StartTimer(TimerId::ApplicationRecoveryTimer);
 }
 
 void DestTwoProcessor::OnStopRequest() {
     LOGD("[DestTwoProcessor] Execute RegionTwo stop logic");
+    StartTimer(TimerId::ApplicationStopRequestTimer);
 }
 
 void DestTwoProcessor::OnTimeoutEvent() {

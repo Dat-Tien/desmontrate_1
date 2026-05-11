@@ -37,6 +37,9 @@ EventType ParseAudioEvent(const std::string& raw_event) {
     if (raw_event == "AUDIO_STOP" || raw_event == "STOP") {
         return EventType::AudioStop;
     }
+    if (raw_event == "AUDIO_PLAY_COMPLETED" || raw_event == "PLAY_COMPLETED") {
+        return EventType::AudioPlayCompleted;
+    }
     return EventType::Unknown;
 }
 
@@ -103,6 +106,23 @@ void AudioWrapper::Stop() {
         close(m_socket_fd);
         m_socket_fd = -1;
     }
+}
+
+bool AudioWrapper::RequestPlayStopCompletedSound() {
+    if (m_socket_fd < 0) {
+        LOGE("[AudioWrapper] Cannot request audio play because socket is not connected");
+        return false;
+    }
+
+    constexpr const char* kRequest = "PLAY_STOP_COMPLETED_SOUND\n";
+    const ssize_t written = write(m_socket_fd, kRequest, std::strlen(kRequest));
+    if (written <= 0) {
+        LOGE("[AudioWrapper] Failed to send audio play request");
+        return false;
+    }
+
+    LOGD("[AudioWrapper] Sent request to AudioService: PLAY_STOP_COMPLETED_SOUND");
+    return true;
 }
 
 void AudioWrapper::ListenLoop() {

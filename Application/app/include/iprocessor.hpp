@@ -26,15 +26,27 @@ protected:
     virtual void OnStartRequest() = 0;
     virtual void OnRecovery() = 0;
     virtual void OnStopRequest() = 0;
+    virtual void OnStopCompleted() = 0;
+    virtual void OnAudioPlayCompleted() = 0;
     virtual void OnTimeoutEvent() = 0;
 
-    void StartTimer(TimerId timer_id,
-                    std::chrono::milliseconds duration,
-                    EventType timeout_event) {
+    void StartTimer(TimerId timer_id) {
         if (m_timer_manager != nullptr) {
-            m_timer_manager->StartTimer(timer_id, duration, timeout_event);
+            m_timer_manager->StartTimer(timer_id);
         } else {
             LOGD("[IProcessor] TimerManager is not configured. timer_id=%d", static_cast<int>(timer_id));
+        }
+    }
+
+    void PauseTimer(TimerId timer_id) {
+        if (m_timer_manager != nullptr) {
+            m_timer_manager->PauseTimer(timer_id);
+        }
+    }
+
+    void ResumeTimer(TimerId timer_id) {
+        if (m_timer_manager != nullptr) {
+            m_timer_manager->ResumeTimer(timer_id);
         }
     }
 

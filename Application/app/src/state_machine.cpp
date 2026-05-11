@@ -7,14 +7,9 @@ void StateMachine::AddTransition(ProcessorState current, EventType event, Proces
     m_transitions.push_back({current, event, next, std::move(action)});
 }
 
-void StateMachine::AddGlobalTransition(EventType event, ProcessorState next, Action action)
-{
-    m_transitions.push_back({std::nullopt, event, next, std::move(action)});
-}
-
 void StateMachine::AddIgnitionOffTransition(EventType event, ProcessorState next, Action action)
 {
-    AddGlobalTransition(event, next, std::move(action));
+    m_transitions.push_back({std::nullopt, event, next, std::move(action)});
 }
 
 void StateMachine::HandleEvent(EventType event)
@@ -66,6 +61,8 @@ std::string ToString(ProcessorState state) {
         case ProcessorState::IgnitionOn: return "IgnitionOn";
         case ProcessorState::Running: return "Running";
         case ProcessorState::Recovery: return "Recovery";
+        case ProcessorState::Stopping: return "Stopping";
+        case ProcessorState::WaitingAudioComplete: return "WaitingAudioComplete";
         case ProcessorState::Stopped: return "Stopped";
         default: return "Unknown";
     }

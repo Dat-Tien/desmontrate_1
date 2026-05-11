@@ -17,6 +17,8 @@ protected:
     void OnStartRequest() override;
     void OnRecovery() override;
     void OnStopRequest() override;
+    void OnStopCompleted() override;
+    void OnAudioPlayCompleted() override;
     void OnTimeoutEvent() override;
 };
 

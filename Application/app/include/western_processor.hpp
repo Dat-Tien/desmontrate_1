@@ -14,6 +14,8 @@ protected:
     void OnIgnitionOn() override;
     void OnIgnitionOff() override;
     void OnTimeoutEvent() override;
+    void OnStopCompleted() override;
+    void OnAudioPlayCompleted() override;
 };
 
 } // namespace app

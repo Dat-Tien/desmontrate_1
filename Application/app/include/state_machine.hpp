@@ -17,6 +17,8 @@ enum class ProcessorState {
     IgnitionOn,
     Running,
     Recovery,
+    Stopping,
+    WaitingAudioComplete,
     Stopped
 };
 
@@ -35,7 +37,6 @@ public:
         : m_current_state(initial_state) {}
 
     void AddTransition(ProcessorState current, EventType event, ProcessorState next, Action action);
-    void AddGlobalTransition(EventType event, ProcessorState next, Action action);
     void AddIgnitionOffTransition(EventType event, ProcessorState next, Action action);
     void HandleEvent(EventType event);
     ProcessorState GetCurrentState() const;

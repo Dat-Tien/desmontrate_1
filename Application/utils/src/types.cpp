@@ -19,6 +19,7 @@ std::string ToString(ServiceType service) {
         case ServiceType::Region: return "Region";
         case ServiceType::Power: return "Power";
         case ServiceType::Internal: return "Internal";
+        case ServiceType::ApplicationTimerTimeout: return "ApplicationTimerTimeout";
         case ServiceType::System: return "System";
         default: return "Unknown";
     }
@@ -30,6 +31,7 @@ std::string ToString(EventType event) {
         case EventType::AudioStart: return "AudioStart";
         case EventType::AudioStop: return "AudioStop";
         case EventType::AudioBeep: return "AudioBeep";
+        case EventType::AudioPlayCompleted: return "AudioPlayCompleted";
         // Power Events
         case EventType::PowerStart: return "PowerStart";
         case EventType::PowerStop: return "PowerStop";
@@ -50,9 +52,16 @@ std::string ToString(EventType event) {
         case EventType::ApplicationResetRequest: return "ApplicationResetRequest";
         case EventType::ApplicationUpdateRequest: return "ApplicationUpdateRequest";
         case EventType::ApplicationStatusRequest: return "ApplicationStatusRequest";
-        case EventType::ApplicatiOnTimeoutEvent: return "ApplicatiOnTimeoutEvent";
+        // Timeout Events
+        case EventType::ApplicationStartRequestTimeout: return "ApplicationStartRequestTimeout";
         case EventType::ApplicationRecoveryTimeout: return "ApplicationRecoveryTimeout";
+        case EventType::ApplicationStopRequestTimeout: return "ApplicationStopRequestTimeout";
+        case EventType::ApplicationResetRequestTimeout: return "ApplicationResetRequestTimeout";
+        case EventType::ApplicatiOnTimeoutEvent: return "ApplicatiOnTimeoutEvent";
         case EventType::ApplicationHeartbeatTimeout: return "ApplicationHeartbeatTimeout";
+        // TESTING
+        case EventType::TestingApplicationStartRequestTimer: return "TestingApplicationStartRequestTimer";
+
         // Common Events
         case EventType::Shutdown: return "Shutdown";
         case EventType::Unknown: return "Unknown";

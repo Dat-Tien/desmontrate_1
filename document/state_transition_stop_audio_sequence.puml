@@ -1,0 +1,134 @@
+@startuml StateTransitionStopAudio
+
+title State Transition Demo - IG_ON / StartRequest / StopRequest / Audio Complete
+
+actor User as act
+
+box "Core" #F0F8FF
+    participant Application as app
+    participant EventHandler as evt
+    queue "MessageQueue" as queue
+    participant ProcessorMgr as mgr
+    participant "Processor\n(Active Region)" as proc
+    participant StateMachine as sm
+    participant TimerManager as timer
+end box
+
+box "Adapter" #ecebd9
+    participant PowerMgr as pwr
+    participant HmiMgr as hmi
+    participant AudioMgr as aud
+end box
+
+box "Services" #88cff8
+    participant Power as pwrsrv
+    participant HMI as hmisrv
+    participant Audio as audsrv
+end box
+
+activate app
+activate mgr
+activate proc
+
+== IG_ON: Idle -> IgnitionOn ==
+
+act ->> pwrsrv: IG_ON
+pwrsrv ->> pwr: IPC message "IG_ON"
+pwr ->> evt: PostEvent(PowerIgnitionOn, raw="IG_ON")
+evt ->> queue: Push(PowerIgnitionOn)
+queue -->> app: Pop PowerIgnitionOn
+app ->> mgr: HandleMessage(PowerIgnitionOn)
+mgr ->> proc: HandleMessage(PowerIgnitionOn)
+proc ->> sm: HandleEvent(PowerIgnitionOn)
+sm ->> sm: Match Idle + PowerIgnitionOn
+sm ->> proc: OnIgnitionOn()
+
+note right of sm
+State transition:
+Idle -> IgnitionOn
+end note
+
+== HMI StartRequest: IgnitionOn -> Running ==
+
+act ->> hmisrv: StartRequest
+hmisrv ->> hmi: IPC message "START_REQUEST"
+hmi ->> evt: PostEvent(ApplicationStartRequest, raw="START_REQUEST")
+evt ->> queue: Push(ApplicationStartRequest)
+queue -->> app: Pop ApplicationStartRequest
+app ->> mgr: HandleMessage(ApplicationStartRequest)
+mgr ->> proc: HandleMessage(ApplicationStartRequest)
+proc ->> sm: HandleEvent(ApplicationStartRequest)
+sm ->> sm: Match IgnitionOn + ApplicationStartRequest
+sm ->> proc: OnStartRequest()
+
+note right of sm
+State transition:
+IgnitionOn -> Running
+end note
+
+== 10 seconds later: HMI StopRequest ==
+
+... 10 seconds later ...
+
+act ->> hmisrv: StopRequest
+hmisrv ->> hmi: IPC message "STOP_REQUEST"
+hmi ->> evt: PostEvent(ApplicationStopRequest, raw="STOP_REQUEST")
+evt ->> queue: Push(ApplicationStopRequest)
+queue -->> app: Pop ApplicationStopRequest
+app ->> mgr: HandleMessage(ApplicationStopRequest)
+mgr ->> proc: HandleMessage(ApplicationStopRequest)
+proc ->> sm: HandleEvent(ApplicationStopRequest)
+sm ->> sm: Match Running + ApplicationStopRequest
+sm ->> proc: OnStopRequest()
+proc ->> timer: StartTimer(ApplicationStopRequestTimer)
+
+note right of sm
+State transition:
+Running -> Stopping
+
+Stop completion is represented
+by a 5-second timer.
+end note
+
+== 5-second stop-completion timer ==
+
+... 5 seconds later ...
+
+timer ->> evt: PostEvent(ApplicationStopRequestTimeout)
+evt ->> queue: Push(ApplicationStopRequestTimeout)
+queue -->> app: Pop ApplicationStopRequestTimeout
+app ->> mgr: HandleMessage(ApplicationStopRequestTimeout)
+mgr ->> proc: HandleMessage(ApplicationStopRequestTimeout)
+proc ->> sm: HandleEvent(ApplicationStopRequestTimeout)
+sm ->> sm: Match Stopping + ApplicationStopRequestTimeout
+sm ->> proc: OnStopCompleted()
+proc ->> aud: RequestPlayStopCompletedSound()
+aud ->> audsrv: IPC request "PLAY_STOP_COMPLETED_SOUND"
+
+note right of sm
+State transition:
+Stopping -> WaitingAudioComplete
+end note
+
+== Audio completed callback: WaitingAudioComplete -> Idle ==
+
+audsrv -->> aud: IPC callback "AUDIO_PLAY_COMPLETED"
+aud ->> evt: PostEvent(AudioPlayCompleted)
+evt ->> queue: Push(AudioPlayCompleted)
+queue -->> app: Pop AudioPlayCompleted
+app ->> mgr: HandleMessage(AudioPlayCompleted)
+mgr ->> proc: HandleMessage(AudioPlayCompleted)
+proc ->> sm: HandleEvent(AudioPlayCompleted)
+sm ->> sm: Match WaitingAudioComplete + AudioPlayCompleted
+sm ->> proc: OnAudioPlayCompleted()
+
+note right of sm
+Final state transition:
+WaitingAudioComplete -> Idle
+end note
+
+proc -->> mgr: CurrentState = Idle
+mgr -->> app: State = Idle
+app -->> act: Demo finished, state = Idle
+
+@enduml

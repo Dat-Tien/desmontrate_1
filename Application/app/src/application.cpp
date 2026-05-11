@@ -69,7 +69,7 @@ void Application::RequestStop()
 
     LOGD("[Application] Stop requested");
     m_running = false;
-    m_timer_manager.CancelAll();
+    m_timer_manager.Stop();
     m_queue.Stop();
     StopInternal();
 }
@@ -91,7 +91,7 @@ void Application::StopInternal()
     PowerWrapper::GetInstance().Stop();
     RegionWrapper::GetInstance().Stop();
 
-    m_timer_manager.CancelAll();
+    m_timer_manager.Stop();
     m_queue.Stop();
 
     if (m_app_thread.joinable() && m_app_thread.get_id() != std::this_thread::get_id()) {

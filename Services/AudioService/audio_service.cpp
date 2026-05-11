@@ -3,12 +3,15 @@
 #include <unistd.h>
 
 #include <atomic>
+#include <chrono>
 #include <csignal>
 #include <cstring>
+#include <functional>
 #include <iostream>
+#include <mutex>
+#include <poll.h>
 #include <string>
 #include <thread>
-#include <poll.h>
 
 namespace {
 
@@ -16,6 +19,7 @@ constexpr const char* kAudioAppSocket = "/tmp/_audio_service.sock";
 constexpr const char* kAudioCmdSocket = "/tmp/_audio_service_cmd.sock";
 
 std::atomic<bool> g_running {true};
+std::mutex g_app_write_mutex;
 
 void HandleSignal(int) {
     g_running = false;
@@ -57,6 +61,7 @@ bool ForwardLine(int app_client_fd, const std::string& line) {
     }
 
     const std::string payload = line + "\n";
+    std::lock_guard<std::mutex> lock(g_app_write_mutex);
     const ssize_t written = write(app_client_fd, payload.c_str(), payload.size());
     if (written <= 0) {
         std::cerr << "[AudioService] Failed to forward message to Application" << std::endl;
@@ -65,6 +70,33 @@ bool ForwardLine(int app_client_fd, const std::string& line) {
 
     std::cout << "[AudioService] Forwarded to Application: " << line << std::endl;
     return true;
+}
+
+void HandleApplicationRequest(int app_client_fd, const std::string& line) {
+    std::cout << "[AudioService] Received request from Application: " << line << std::endl;
+
+    if (line == "PLAY_STOP_COMPLETED_SOUND") {
+        std::thread([app_client_fd]() {
+            std::cout << "[AudioService] Playing stop-completed sound..." << std::endl;
+            std::this_thread::sleep_for(std::chrono::seconds(1));
+            ForwardLine(app_client_fd, "AUDIO_PLAY_COMPLETED");
+        }).detach();
+        return;
+    }
+
+    std::cout << "[AudioService] Unknown application request: " << line << std::endl;
+}
+
+void ProcessLines(std::string& buffer, const std::function<void(const std::string&)>& handler) {
+    std::size_t newline_pos = std::string::npos;
+    while ((newline_pos = buffer.find('\n')) != std::string::npos) {
+        const std::string line = buffer.substr(0, newline_pos);
+        buffer.erase(0, newline_pos + 1);
+
+        if (!line.empty()) {
+            handler(line);
+        }
+    }
 }
 
 } // namespace
@@ -98,12 +130,17 @@ int main() {
     std::cout << "[AudioService] Application connected" << std::endl;
     std::cout << "[AudioService] Waiting for slld commands on " << kAudioCmdSocket << std::endl;
 
-    while (g_running) {
-        pollfd pfd{};
-        pfd.fd = cmd_server_fd;
-        pfd.events = POLLIN;
+    std::string app_buffer;
+    char read_buffer[128]{};
 
-        int ret = poll(&pfd, 1, 500); // 500 ms timeout
+    while (g_running) {
+        pollfd fds[2]{};
+        fds[0].fd = cmd_server_fd;
+        fds[0].events = POLLIN;
+        fds[1].fd = app_client_fd;
+        fds[1].events = POLLIN;
+
+        const int ret = poll(fds, 2, 500);
         if (ret < 0) {
             if (!g_running) {
                 break;
@@ -113,10 +150,25 @@ int main() {
         }
 
         if (ret == 0) {
-            continue; // timeout, re-check g_running
+            continue;
         }
 
-        if (pfd.revents & POLLIN) {
+        if (fds[1].revents & POLLIN) {
+            const ssize_t bytes_read = read(app_client_fd, read_buffer, sizeof(read_buffer) - 1);
+            if (bytes_read <= 0) {
+                std::cout << "[AudioService] Application connection closed" << std::endl;
+                g_running = false;
+                break;
+            }
+
+            read_buffer[bytes_read] = '\0';
+            app_buffer.append(read_buffer, static_cast<std::size_t>(bytes_read));
+            ProcessLines(app_buffer, [app_client_fd](const std::string& line) {
+                HandleApplicationRequest(app_client_fd, line);
+            });
+        }
+
+        if (fds[0].revents & POLLIN) {
             const int cmd_client_fd = accept(cmd_server_fd, nullptr, nullptr);
             if (cmd_client_fd < 0) {
                 if (!g_running) {
@@ -126,9 +178,7 @@ int main() {
                 continue;
             }
 
-            std::string buffer;
-            char read_buffer[128]{};
-
+            std::string cmd_buffer;
             while (g_running) {
                 const ssize_t bytes_read = read(cmd_client_fd, read_buffer, sizeof(read_buffer) - 1);
                 if (bytes_read <= 0) {
@@ -136,20 +186,12 @@ int main() {
                 }
 
                 read_buffer[bytes_read] = '\0';
-                buffer.append(read_buffer, static_cast<std::size_t>(bytes_read));
+                cmd_buffer.append(read_buffer, static_cast<std::size_t>(bytes_read));
 
-                std::size_t newline_pos = std::string::npos;
-                while ((newline_pos = buffer.find('\n')) != std::string::npos) {
-                    const std::string line = buffer.substr(0, newline_pos);
-                    buffer.erase(0, newline_pos + 1);
-
-                    if (line.empty()) {
-                        continue;
-                    }
-
+                ProcessLines(cmd_buffer, [app_client_fd](const std::string& line) {
                     std::cout << "[AudioService] Received from slld: " << line << std::endl;
                     ForwardLine(app_client_fd, line);
-                }
+                });
             }
 
             close(cmd_client_fd);

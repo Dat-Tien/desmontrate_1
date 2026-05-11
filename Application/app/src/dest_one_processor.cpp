@@ -21,10 +21,12 @@ void DestOneProcessor::OnStartRequest() {
 
 void DestOneProcessor::OnRecovery() {
     LOGD("[DestOneProcessor] Execute RegionOne recovery logic");
+    StartTimer(TimerId::ApplicationRecoveryTimer);
 }
 
 void DestOneProcessor::OnStopRequest() {
     LOGD("[DestOneProcessor] Execute RegionOne stop logic");
+    StartTimer(TimerId::ApplicationStopRequestTimer);
 }
 
 void DestOneProcessor::OnTimeoutEvent() {

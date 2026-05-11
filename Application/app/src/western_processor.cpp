@@ -1,6 +1,5 @@
 #include "western_processor.hpp"
-
-#include <chrono>
+#include "audio_wrapper.hpp"
 
 namespace app {
 
@@ -9,15 +8,50 @@ WesternProcessor::WesternProcessor() {
 }
 
 void WesternProcessor::InitializeStateMachine() {
-    m_state_machine.AddTransition(ProcessorState::Idle,       EventType::PowerIgnitionOn,          ProcessorState::IgnitionOn, [this]() { OnIgnitionOn(); });
-    m_state_machine.AddTransition(ProcessorState::IgnitionOn, EventType::ApplicationStartRequest,  ProcessorState::Running,    [this]() { OnStartRequest(); });
-    m_state_machine.AddTransition(ProcessorState::IgnitionOn, EventType::ApplicationRecovery,      ProcessorState::Recovery,   [this]() { OnRecovery(); });
-    m_state_machine.AddTransition(ProcessorState::Running,    EventType::ApplicationStopRequest,   ProcessorState::Stopped,    [this]() { OnStopRequest(); });
-    m_state_machine.AddTransition(ProcessorState::Recovery,   EventType::ApplicationStopRequest,   ProcessorState::Stopped,    [this]() { OnStopRequest(); });
-    m_state_machine.AddTransition(ProcessorState::Running,    EventType::ApplicatiOnTimeoutEvent, ProcessorState::Recovery,  [this]() { OnTimeoutEvent(); });
+    m_state_machine.AddTransition(ProcessorState::Idle,
+                                  EventType::PowerIgnitionOn,
+                                  ProcessorState::IgnitionOn,
+                                  [this]() { OnIgnitionOn(); });
+
+    m_state_machine.AddTransition(ProcessorState::IgnitionOn,
+                                  EventType::ApplicationStartRequest,
+                                  ProcessorState::Running,
+                                  [this]() { OnStartRequest(); });
+
+    m_state_machine.AddTransition(ProcessorState::IgnitionOn,
+                                  EventType::ApplicationRecovery,
+                                  ProcessorState::Recovery,
+                                  [this]() { OnRecovery(); });
+
+    m_state_machine.AddTransition(ProcessorState::Running,
+                                  EventType::ApplicationStopRequest,
+                                  ProcessorState::Stopping,
+                                  [this]() { OnStopRequest(); });
+
+    m_state_machine.AddTransition(ProcessorState::Recovery,
+                                  EventType::ApplicationStopRequest,
+                                  ProcessorState::Stopping,
+                                  [this]() { OnStopRequest(); });
+
+    m_state_machine.AddTransition(ProcessorState::Stopping,
+                                  EventType::ApplicationStopRequestTimeout,
+                                  ProcessorState::WaitingAudioComplete,
+                                  [this]() { OnStopCompleted(); });
+
+    m_state_machine.AddTransition(ProcessorState::WaitingAudioComplete,
+                                  EventType::AudioPlayCompleted,
+                                  ProcessorState::Idle,
+                                  [this]() { OnAudioPlayCompleted(); });
+
+    m_state_machine.AddTransition(ProcessorState::Running,
+                                  EventType::ApplicatiOnTimeoutEvent,
+                                  ProcessorState::Recovery,
+                                  [this]() { OnTimeoutEvent(); });
 
     // Global transition: IG_OFF is valid from any current state.
-    m_state_machine.AddIgnitionOffTransition(EventType::PowerIgnitionOff, ProcessorState::Idle, [this]() { OnIgnitionOff(); });
+    m_state_machine.AddIgnitionOffTransition(EventType::PowerIgnitionOff,
+                                             ProcessorState::Idle,
+                                             [this]() { OnIgnitionOff(); });
 }
 
 void WesternProcessor::HandleMessage(const AppMessage& message) {
@@ -34,6 +68,15 @@ void WesternProcessor::OnIgnitionOn() {
 void WesternProcessor::OnIgnitionOff() {
     LOGD("[WesternProcessor] Common ignition OFF cleanup");
     CancelAllTimers();
+}
+
+void WesternProcessor::OnStopCompleted() {
+    LOGD("[WesternProcessor] Stop request completed. Request AudioService to play completion sound");
+    AudioWrapper::GetInstance().RequestPlayStopCompletedSound();
+}
+
+void WesternProcessor::OnAudioPlayCompleted() {
+    LOGD("[WesternProcessor] Audio play completed. Final state is Idle");
 }
 
 void WesternProcessor::OnTimeoutEvent() {
