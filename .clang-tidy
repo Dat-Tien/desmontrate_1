@@ -1,0 +1,16 @@
+Checks: >
+  -*,
+  clang-analyzer-*,
+  bugprone-infinite-loop,
+  bugprone-narrowing-conversions,
+  bugprone-signed-char-misuse,
+  bugprone-sizeof-expression,
+  bugprone-use-after-move,
+  cppcoreguidelines-init-variables,
+  cppcoreguidelines-pro-type-vararg,
+  readability-duplicate-include,
+  readability-implicit-bool-conversion
+
+WarningsAsErrors: '*'
+HeaderFilterRegex: '^(Application|Common|Services|slld)/.*'
+FormatStyle: none
